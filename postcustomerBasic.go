@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	dbx "github.com/go-ozzo/ozzo-dbx"
@@ -14,8 +15,19 @@ type updateCustomerBasic struct {
 	UpdateFirstName    *string `db:"first_name"`
 	UpdateMiddleName   *string `db:"middle_name"`
 	UpdateLastName     *string `db:"last_name"`
+	UpdateSuffix       *string `db:"suffix"`
+	UpdateBirthday     *string `db:"birth_date"`
+	UpdateAddress1     *string `db:"address1"`
+	UpdateAddress2     *string `db:"address2"`
+	UpdateCountry      *string `db:"country"`
+	UpdateState        *string `db:"state"`
+	UpdateCity         *string `db:"city"`
+	UpdateZipCode      *string `db:"zipcode"`
+	UpdateHomeNumber   *string `db:"home_number"`
 	UpdateMobileNumber *string `db:"mobile_number"`
 	UpdateEmail        *string `db:"email"`
+	UpdateProgramId    *int    `db:"program_id"`
+	UpdateCustUniqueId *string `db:"cust_unique_id"`
 }
 
 func (c updateCustomerBasic) TableName() string {
@@ -58,13 +70,42 @@ func PostCustomerBasic(c *gin.Context) {
 				updateinfo.UpdateFirstName = &value
 			case "R2":
 				updateinfo.UpdateMiddleName = &value
-
 			case "R3":
 				updateinfo.UpdateLastName = &value
+			case "R4":
+				updateinfo.UpdateSuffix = &value
+			case "R5":
+				updateinfo.UpdateBirthday = &value
+			case "R6":
+				updateinfo.UpdateAddress1 = &value
+			case "R7":
+				updateinfo.UpdateAddress2 = &value
+			case "R8":
+				updateinfo.UpdateCountry = &value
+			case "R9":
+				updateinfo.UpdateState = &value
+			case "R10":
+				updateinfo.UpdateCity = &value
+			case "R11":
+				updateinfo.UpdateZipCode = &value
+			case "R12":
+				updateinfo.UpdateHomeNumber = &value
 			case "R13":
 				updateinfo.UpdateMobileNumber = &value
 			case "R14":
 				updateinfo.UpdateEmail = &value
+			case "R15":
+				var tempVal int
+				tempVal, err = strconv.Atoi(value)
+				if err != nil {
+					fmt.Println(err)
+					c.JSON(400, gin.H{"status": false, "message": "Provide complete customer information to create.", "response_code": 400})
+					return
+				}
+				updateinfo.UpdateProgramId = &tempVal
+
+			case "R16":
+				updateinfo.UpdateCustUniqueId = &value
 
 			}
 		}

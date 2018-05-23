@@ -48,5 +48,7 @@ func main() {
 
 	//post
 	router.POST("/api/v1/customer/customer_basic/", PostCustomerBasic)
+	router.POST("/api/v1/customer/customer_additional/", PostCustomerAdditional)
+	router.POST("/api/v1/customer/accept_terms_and_condition/", PostCreditLineApplication)
 	router.Run(":8080")
 }
