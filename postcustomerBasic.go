@@ -1,46 +1,88 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
-	//github.com/go-ozzo/ozzo-validation
-	//	github.com/go-ozzo/ozzo-validation/is
+	dbx "github.com/go-ozzo/ozzo-dbx"
+	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 )
 
+type updateCustomerBasic struct {
+	Id                 int
+	UpdateFirstName    *string `db:"first_name"`
+	UpdateMiddleName   *string `db:"middle_name"`
+	UpdateLastName     *string `db:"last_name"`
+	UpdateMobileNumber *string `db:"mobile_number"`
+	UpdateEmail        *string `db:"email"`
+}
+
+func (c updateCustomerBasic) TableName() string {
+	return "tblcustomerbasicinfo"
+}
+
+func (a updateCustomerBasic) Validate() error {
+	return validation.ValidateStruct(&a,
+		validation.Field(&a.UpdateFirstName, validation.Required),
+		validation.Field(&a.UpdateLastName, validation.Required),
+		validation.Field(&a.UpdateMobileNumber, validation.Required),
+		validation.Field(&a.UpdateEmail, validation.Required, is.Email),
+	)
+}
+
 func PostCustomerBasic(c *gin.Context) {
-	/*
-		getCustUniqueId := c.Query("cust_unique_id")
-		lengthCustUniqueId := len(getCustUniqueId)
-		if lengthCustUniqueId == 0 {
-			return
-		} else { //lengthCustUniqueId > 0
-			flag := CheckValidCustUniqueId(getCustUniqueId)
-			if flag == false {
-				return
-			} else { // cust_unique_id is contained in database
-				fmt.Println("unique id is true ")
-			} // end validid is valid
+	tempId := 15
+	updateinfo := &updateCustomerBasic{}
+	err := db.Select().
+		From("tblcustomerbasicinfo").
+		Where(dbx.HashExp{"id": tempId}).
+		One(updateinfo)
+	if err != nil {
+		c.JSON(404, gin.H{"error": "404 Not Found"})
 
-		} // end of lengthid >0
-	*/ /*
-		id := c.Query("id")
+	}
+	fmt.Println(updateinfo)
+	formKeys := []string{"R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15", "R16"}
+	//c.GetPostForm(FormKeys)
 
-		first_name := c.PostForm("R1") //require
-		middle_name := c.PostForm("R2")
-		last_name := c.PostForm("R3") //require
-		suffix := c.PostForm("R4")
-		birth_date := c.PostForm("R5")
-		adress1 := c.PostForm("R6")
-		adress2 := c.PostForm("R7")
-		country := c.PostForm("R8")
-		state := c.PostForm("R9")
-		city := c.PostForm("R10")
-		zipcode := c.PostForm("R11")
-		home_number := c.PostForm("R12")
-		mobile_number := c.PostForm("R13") //require
-		email := c.PostForm("R14")         //require
-		program_id := c.PostForm("R15")
-		cust_unique_id := c.PostForm("R16") //require
+	for index := range formKeys {
+		formKey := formKeys[index]
+		//fmt.Println(c.PostForm(formKey))
+		value, isNotNull := c.GetPostForm(formKey)
+		if isNotNull {
 
-		// need to require postForm input
-	*/
+			fmt.Println(formKey + " " + value)
+			switch formKey {
+			case "R1":
+				updateinfo.UpdateFirstName = &value
+			case "R2":
+				updateinfo.UpdateMiddleName = &value
+
+			case "R3":
+				updateinfo.UpdateLastName = &value
+			case "R13":
+				updateinfo.UpdateMobileNumber = &value
+			case "R14":
+				updateinfo.UpdateEmail = &value
+
+			}
+		}
+	}
+
+	//check require postform is valid or not
+	err = updateinfo.Validate()
+
+	if err != nil {
+		c.JSON(400, gin.H{"status": false, "message": "Provide complete customer information to create.", "response_code": 400}) // invalid postformretur
+		return
+	}
+
+	err = db.Model(updateinfo).Update()
+	if err != nil {
+		c.JSON(500, gin.H{"status": false, "message": "Provide complete customer information to create.", "response_code": 400}) // invalid postformretur
+		return
+	} // end of valid postform
+	c.JSON(200, gin.H{"status": true, "message": "customer information has been updated successfully.", "response_code": 200})
+
 } // end of PstCustomerBasic function
