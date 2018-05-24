@@ -3,16 +3,22 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/epointpayment/mloc_api_go/app/database"
 	"github.com/epointpayment/mloc_api_go/app/helpers"
+	dbx "github.com/go-ozzo/ozzo-dbx"
 
 	"github.com/labstack/echo"
 )
+
+// DB is the database handler
+var db *dbx.DB
 
 // Controllers manages the controllers used in the application
 type Controllers struct{}
 
 // NewControllers creates an instance of the service
-func NewControllers() *Controllers {
+func NewControllers(database *database.Database) *Controllers {
+	db = database.GetInstance()
 	c := &Controllers{}
 	return c
 }

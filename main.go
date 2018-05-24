@@ -37,7 +37,7 @@ func main() {
 	}
 
 	// Setup router and run
-	c := controllers.NewControllers()
+	c := controllers.NewControllers(db)
 	r := router.NewRouter(c)
 	err = r.Run()
 	if err != nil {
