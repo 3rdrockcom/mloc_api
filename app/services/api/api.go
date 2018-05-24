@@ -23,7 +23,7 @@ func New() *APIService {
 func (as *APIService) DoAuth(username, password string) (isValid bool, err error) {
 	authorizedUsers := make(map[string]string)
 
-	authorizedUsers["EPOINT"] = "eyslTSh53q"
+	authorizedUsers["EPOINT"] = "jm1cQZOqPN"
 
 	if val, ok := authorizedUsers[username]; ok && val == password {
 		isValid = true
@@ -54,7 +54,7 @@ func (as *APIService) GetRegistrationKey() (entry *models.APIKey, err error) {
 	entry = new(models.APIKey)
 
 	err = DB.Select().
-		Where(dbx.HashExp{"customer_id": 0}).
+		Where(dbx.HashExp{"fk_customer_id": nil}).
 		AndWhere(dbx.NewExp("`key`!={:key}", dbx.Params{"key": "LOGIN"})).
 		One(entry)
 	if err != nil {
@@ -96,7 +96,7 @@ func (as *APIService) GetKeyByCustomerID(customerID int) (entry *models.APIKey, 
 	entry = new(models.APIKey)
 
 	err = DB.Select().
-		Where(dbx.HashExp{"customer_id": customerID}).
+		Where(dbx.HashExp{"fk_customer_id": customerID}).
 		One(entry)
 
 	return

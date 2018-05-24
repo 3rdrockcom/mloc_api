@@ -27,7 +27,7 @@ func DefaultValidator(key string, c echo.Context) (isValid bool, err error) {
 	customerUniqueID := c.QueryParam("cust_unique_id")
 
 	// Initialize customer service
-	sc, err := Customer.New(entry.CustomerID)
+	sc, err := Customer.New(*entry.CustomerID)
 	if err != nil {
 		return
 	}
@@ -48,7 +48,7 @@ func DefaultValidator(key string, c echo.Context) (isValid bool, err error) {
 	isValid = true
 
 	// Pass user information to context
-	c.Set("customerID", entry.CustomerID)
+	c.Set("customerID", *entry.CustomerID)
 	return
 }
 

@@ -32,7 +32,7 @@ func (i *Info) Get() (customer *models.Customer, err error) {
 
 // CustomerDetails holds detailed customer information
 type CustomerDetails struct {
-	ID                    int    `json:"id"`
+	ID                    int    `json:"id" db:"customer_id"`
 	FirstName             string `json:"first_name"`
 	LastName              string `json:"last_name"`
 	Email                 string `json:"email"`
@@ -47,10 +47,9 @@ type CustomerDetails struct {
 func (i *Info) GetDetails() (customerDetails *CustomerDetails, err error) {
 	customerDetails = new(CustomerDetails)
 
-	err = DB.Select("customers.*", "api_keys.key").
-		From("customers").
-		LeftJoin("api_keys", dbx.NewExp("api_keys.customer_id = customers.id")).
-		Where(dbx.HashExp{"customers.id": i.cs.CustomerID}).
+	err = DB.Select().
+		From("view_customer_info").
+		Where(dbx.HashExp{"customer_id": i.cs.CustomerID}).
 		One(customerDetails)
 	if err != nil {
 		if err == sql.ErrNoRows {

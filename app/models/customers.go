@@ -18,12 +18,11 @@ type Customer struct {
 	ProgramCustomerID     int    `json:"-"`
 	ProgramCustomerMobile string `json:"-"`
 	CustomerUniqueID      string `json:"-" db:"cust_unique_id"`
-	LastTransactionID     int    `json:"-"`
 }
 
 // TableName gets the name of the database table
 func (c Customer) TableName() string {
-	return "customers"
+	return "tblcustomerbasicinfo"
 }
 
 // Validate checks if the values in the struct are valid

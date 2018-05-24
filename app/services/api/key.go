@@ -107,7 +107,7 @@ func (k *Key) GenerateCustomerKey() (customerKey Key, err error) {
 	}
 
 	entry := &models.APIKey{
-		CustomerID:  customer.ID,
+		CustomerID:  &customer.ID,
 		Key:         k.generateAPIKey(),
 		DateCreated: time.Now().UTC(),
 	}
@@ -131,7 +131,8 @@ func (k *Key) GenerateCustomerKey() (customerKey Key, err error) {
 
 // generateCustomerUniqueID generates an MD5 hash from customer program information
 func (k *Key) generateCustomerUniqueID() string {
-	str := strconv.Itoa(k.programID) + "_" + strconv.Itoa(k.programCustomerID) + "_" + k.programCustomerMobile
+	// str := strconv.Itoa(k.programID) + "_" + strconv.Itoa(k.programCustomerID) + "_" + k.programCustomerMobile
+	str := strconv.Itoa(k.programCustomerID) + "_" + k.programCustomerMobile
 
 	h := md5.New()
 	h.Write([]byte(str))
