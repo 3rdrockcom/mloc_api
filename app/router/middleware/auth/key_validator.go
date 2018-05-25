@@ -25,11 +25,17 @@ func DefaultValidator(key string, customerUniqueIDFieldName string, c echo.Conte
 
 	// Get customer unique ID
 	var customerUniqueID string
-	if customerUniqueIDFieldName == "" {
+	if customerUniqueIDFieldName != "" {
+		method := c.Request().Method
+		switch method {
+		case "GET":
+			customerUniqueID = c.QueryParam(customerUniqueIDFieldName)
+		case "POST":
+			customerUniqueID = c.FormValue(customerUniqueIDFieldName)
+		}
+	} else {
 		customerUniqueIDFieldName = "cust_unique_id"
 		customerUniqueID = c.QueryParam(customerUniqueIDFieldName)
-	} else {
-		customerUniqueID = c.FormValue(customerUniqueIDFieldName)
 	}
 
 	// Initialize customer service
