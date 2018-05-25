@@ -20,5 +20,7 @@ func (r *Router) appendRoutes() {
 
 	// Endpoints for lookup
 	v1.GET("/lookup/get_country", r.c.GetCountry, r.mwKeyAuth("default"))
+	v1.GET("/lookup/get_income_source", r.c.GetIncomeSource, r.mwKeyAuth("default"))
+	v1.GET("lookup/get_pay_frequency", r.c.GetPayFrequency, r.mwKeyAuth("default"))
 
 }

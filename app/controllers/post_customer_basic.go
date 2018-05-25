@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -28,8 +27,6 @@ type PostCustomerBasic struct {
 	HomeNumber   *string `db:"home_number"`
 	MobileNumber *string `db:"mobile_number"`
 	Email        *string `db:"email"`
-	ProgramID    *int    `db:"program_id"`
-	CustUniqueID *string `db:"cust_unique_id"`
 }
 
 // TableName gets customerbasicinfo table from database
@@ -48,8 +45,14 @@ func (a PostCustomerBasic) Validate() error {
 }
 
 var (
-	// ProblemOccurredMessage displays error message occur when update table customer basic information fails
-	ProblemOccurredMessage = "Some problems occurred, please try agin."
+	// ErrProblemOccured is given if it can't get data from database or can't covert input to string
+	ErrProblemOccured = "Some problems occurred, please try agin."
+
+	// ErrCustomerInfoIncomplete is given if customerinformation is not complete
+	ErrCustomerInfoIncomplete = "Provide complete customer information to create."
+
+	// MsgCustomerInfoSuccess is given if customer information is update successfully
+	MsgCustomerInfoSuccess = "Customer information has been updated successfully."
 )
 
 // PostCustomerBasic allows to update table customer basic information from database if it is valid
@@ -58,124 +61,131 @@ func (co *Controllers) PostCustomerBasic(c echo.Context) error {
 	customerID := c.Get("customerID").(int)
 
 	customerBasic := &PostCustomerBasic{}
+	customerBasicRequired := PostCustomerBasic{}
 
-	// get table customer basic information from database
+	// Get table customer basic information from database
 	err := db.Select().
 		From("tblcustomerbasicinfo").
 		Where(dbx.HashExp{"id": customerID}).
 		One(customerBasic)
 
-		// it displays error if the customer id is not exists
+	// It displays error if the customer id is not exists
 	if err != nil {
-		message := ProblemOccurredMessage
-		fmt.Println("not get it from db")
-		return SendErrorResponse(c, http.StatusNotFound, message)
+		message := ErrProblemOccured
+		return SendErrorResponse(c, http.StatusBadRequest, message)
 	}
 
-	// array of postform
-	formKeys := []string{"R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15", "R16"}
+	formKeys, err := c.FormParams()
 
-	for index := range formKeys {
-		formKey := formKeys[index]
+	for formKey := range formKeys {
 		value := c.FormValue(formKey) // read each value from postform
 
 		switch formKey {
 		case "R1":
 			customerBasic.FirstName = &value
+			customerBasicRequired.FirstName = &value
+
 		case "R2":
 			customerBasic.MiddleName = &value
+
 		case "R3":
 			customerBasic.LastName = &value
+			customerBasicRequired.LastName = &value
+
 		case "R4":
 			customerBasic.Suffix = &value
 		case "R5":
 			customerBasic.Birthday = &value
+
 		case "R6":
 			customerBasic.Address1 = &value
+
 		case "R7":
 			customerBasic.Address2 = &value
 
 		case "R8":
+			if len(value) == 0 {
+				customerBasic.Country = nil
+				continue
+			}
 			var tempVal int
 			tempVal, err = strconv.Atoi(value)
 			if err != nil {
 
-				message := ProblemOccurredMessage
-				fmt.Println("checking end R8")
-				return SendErrorResponse(c, http.StatusNotFound, message)
+				message := ErrProblemOccured
+				return SendErrorResponse(c, http.StatusBadRequest, message)
 			}
 			customerBasic.Country = &tempVal
-		case "R9":
 
+		case "R9":
+			if len(value) == 0 {
+				customerBasic.State = nil
+				continue
+			}
 			var tempVal int
 			tempVal, err = strconv.Atoi(value)
 			if err != nil {
-				message := ProblemOccurredMessage
-				return SendErrorResponse(c, http.StatusNotFound, message)
+				message := ErrProblemOccured
+				return SendErrorResponse(c, http.StatusBadRequest, message)
 			}
 
 			customerBasic.State = &tempVal
+
 		case "R10":
+			if len(value) == 0 {
+				customerBasic.City = nil
+				continue
+			}
 
 			var tempVal int
 			tempVal, err = strconv.Atoi(value)
 			if err != nil {
-				message := ProblemOccurredMessage
-				return SendErrorResponse(c, http.StatusNotFound, message)
+				message := ErrProblemOccured
+				return SendErrorResponse(c, http.StatusBadRequest, message)
 			}
 
 			customerBasic.City = &tempVal
+
 		case "R11":
-			fmt.Println("checking begin R11")
 			customerBasic.ZipCode = &value
+
 		case "R12":
-			fmt.Println("checking begin R12")
 			customerBasic.HomeNumber = &value
+
 		case "R13":
-			fmt.Println("checking begin R13")
 			customerBasic.MobileNumber = &value
+			customerBasicRequired.MobileNumber = &value
+
 		case "R14":
-			fmt.Println("checking begin R14")
 			customerBasic.Email = &value
-		case "R15": // not require
-			/*
-				var tempVal int
-				tempVal, err = strconv.Atoi(value)
-				if err != nil {
-					message := ProblemOccurredMessage
-					fmt.Println("checking error in R15")
-					return SendErrorResponse(c, http.StatusNotFound, message)
-				}
-				customerBasic.ProgramID = &tempVal
-			*/
-		case "R16":
-
-			// not required
-			// customerBasic.CustUniqueID = &value
-
-			//	}
-
+			customerBasicRequired.Email = &value
 		}
 	}
-	//check require postform is valid or not
+
+	// Check customer required is validate
+	err = customerBasicRequired.Validate()
+	if err != nil {
+		message := ErrCustomerInfoIncomplete
+		return SendErrorResponse(c, http.StatusBadRequest, message)
+	}
+	// Check require postform is valid or not
 	err = customerBasic.Validate()
 
-	// require postform is not validation, displays error
+	// Require postform is not validation, displays error
 	if err != nil {
-		ProblemOccurredMessage := "Provide complete customer information to create."
-		fmt.Println("not get it to check validate")
-		return SendErrorResponse(c, http.StatusNotFound, ProblemOccurredMessage)
-	}
-	fmt.Println("checking after validate")
-	// displays update customer error occur
-	err = db.Model(customerBasic).Update()
-	if err != nil {
-		message := ProblemOccurredMessage
+		message := ErrCustomerInfoIncomplete
 		return SendErrorResponse(c, http.StatusNotFound, message)
 	}
 
-	//success to update customer basic
-	successUpdataMessage := "Customer information has been updated successfully."
-	return SendResponse(c, http.StatusOK, successUpdataMessage)
+	// Displays update customer error occur
+	err = db.Model(customerBasic).Update()
+	if err != nil {
+		message := ErrProblemOccured
+		return SendErrorResponse(c, http.StatusBadRequest, message)
+	}
+
+	// Success to update customer basic
+	message := MsgCustomerInfoSuccess
+	return SendResponse(c, http.StatusOK, message)
 
 }

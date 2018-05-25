@@ -41,8 +41,14 @@ func (co *Controllers) GetCountry(c echo.Context) error {
 	if len(queryCountryID) == 0 {
 		countries := Countries{}
 
-		q := db.NewQuery("SELECT * FROM tblcountry")
-		q.All(&countries)
+		err := db.Select().
+			From("tblcountry").
+			All(&countries)
+
+		if err != nil {
+			message := ErrCountryNotFound
+			return SendErrorResponse(c, http.StatusNotFound, message)
+		}
 
 		return SendResponse(c, http.StatusOK, countries)
 	}
