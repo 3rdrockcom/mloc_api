@@ -23,19 +23,21 @@ func DefaultValidator(key string, customerUniqueIDFieldName string, c echo.Conte
 		return
 	}
 
+	// If customer unique ID field name is given, allow access to non-user related (lookup) requests
+	if customerUniqueIDFieldName == "" {
+		// Is for non-user related requests authorized
+		isValid = true
+		return
+	}
+
 	// Get customer unique ID
 	var customerUniqueID string
-	if customerUniqueIDFieldName != "" {
-		method := c.Request().Method
-		switch method {
-		case "GET":
-			customerUniqueID = c.QueryParam(customerUniqueIDFieldName)
-		case "POST":
-			customerUniqueID = c.FormValue(customerUniqueIDFieldName)
-		}
-	} else {
-		customerUniqueIDFieldName = "cust_unique_id"
+	method := c.Request().Method
+	switch method {
+	case "GET":
 		customerUniqueID = c.QueryParam(customerUniqueIDFieldName)
+	case "POST":
+		customerUniqueID = c.FormValue(customerUniqueIDFieldName)
 	}
 
 	// Initialize customer service
@@ -56,11 +58,12 @@ func DefaultValidator(key string, customerUniqueIDFieldName string, c echo.Conte
 		return
 	}
 
+	// Pass user information to context
+	c.Set("customerID", *entry.CustomerID)
+
 	// User is authorized
 	isValid = true
 
-	// Pass user information to context
-	c.Set("customerID", *entry.CustomerID)
 	return
 }
 
