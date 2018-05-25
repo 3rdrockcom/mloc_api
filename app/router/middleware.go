@@ -9,6 +9,7 @@ import (
 
 // appendMiddleware registers middleware
 func (r *Router) appendMiddleware() {
+	r.e.Pre(middleware.RemoveTrailingSlash())
 	r.e.Use(middleware.Gzip())
 	r.e.Use(middleware.Logger())
 	r.e.Use(middleware.Recover())
