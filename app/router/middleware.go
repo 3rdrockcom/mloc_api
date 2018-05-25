@@ -19,7 +19,7 @@ func (r *Router) mwBasicAuth() echo.MiddlewareFunc {
 	return middleware.BasicAuth(auth.BasicValidator)
 }
 
-func (r *Router) mwKeyAuth(authType string) echo.MiddlewareFunc {
+func (r *Router) mwKeyAuth(authType string, customerUniqueIDFieldName string) echo.MiddlewareFunc {
 	validator := auth.DefaultValidator
 
 	switch authType {
@@ -29,9 +29,10 @@ func (r *Router) mwKeyAuth(authType string) echo.MiddlewareFunc {
 		validator = auth.RegistrationValidator
 	}
 
-	return middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
-		KeyLookup:  "header:X-API-KEY",
-		AuthScheme: "",
-		Validator:  validator,
+	return auth.KeyAuthWithConfig(auth.KeyAuthConfig{
+		KeyLookup:                 "header:X-API-KEY",
+		AuthScheme:                "",
+		Validator:                 validator,
+		CustomerUniqueIDFieldName: customerUniqueIDFieldName,
 	})
 }

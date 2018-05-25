@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-func DefaultValidator(key string, c echo.Context) (isValid bool, err error) {
+func DefaultValidator(key string, customerUniqueIDFieldName string, c echo.Context) (isValid bool, err error) {
 	// Initialize API service
 	sa := API.New()
 
@@ -24,7 +24,13 @@ func DefaultValidator(key string, c echo.Context) (isValid bool, err error) {
 	}
 
 	// Get customer unique ID
-	customerUniqueID := c.QueryParam("cust_unique_id")
+	var customerUniqueID string
+	if customerUniqueIDFieldName == "" {
+		customerUniqueIDFieldName = "cust_unique_id"
+		customerUniqueID = c.QueryParam(customerUniqueIDFieldName)
+	} else {
+		customerUniqueID = c.FormValue(customerUniqueIDFieldName)
+	}
 
 	// Initialize customer service
 	sc, err := Customer.New(*entry.CustomerID)
@@ -52,7 +58,7 @@ func DefaultValidator(key string, c echo.Context) (isValid bool, err error) {
 	return
 }
 
-func RegistrationValidator(key string, c echo.Context) (isValid bool, err error) {
+func RegistrationValidator(key string, customerUniqueIDFieldName string, c echo.Context) (isValid bool, err error) {
 	// Initialize API service
 	sa := API.New()
 
@@ -74,7 +80,7 @@ func RegistrationValidator(key string, c echo.Context) (isValid bool, err error)
 }
 
 // LoginValidator is a validator used for key auth middleware
-func LoginValidator(key string, c echo.Context) (isValid bool, err error) {
+func LoginValidator(key string, customerUniqueIDFieldName string, c echo.Context) (isValid bool, err error) {
 	// Initialize API service
 	sa := API.New()
 
