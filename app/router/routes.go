@@ -15,8 +15,10 @@ func (r *Router) appendRoutes() {
 
 	// Endpoints for customer
 	v1.GET("/customer/get_customer", r.c.GetCustomer, r.mwKeyAuth("default"))
-	v1.POST("/customer/customer_basic", r.c.PostAddCustomer, r.mwKeyAuth("default"))
+	// v1.POST("/customer/customer_basic", r.c.PostAddCustomer, r.mwKeyAuth("default"))
+	v1.POST("/customer/customer_basic", r.c.PostCustomerBasic, r.mwKeyAuth("default"))
 
 	// Endpoints for lookup
 	v1.GET("/lookup/get_country", r.c.GetCountry, r.mwKeyAuth("default"))
+
 }
