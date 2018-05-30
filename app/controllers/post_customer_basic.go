@@ -159,6 +159,10 @@ func (co *Controllers) PostCustomerBasic(c echo.Context) error {
 		case "R14":
 			customerBasic.Email = &value
 			customerBasicRequired.Email = &value
+		case "R15":
+			// Not necessary to do
+		case "R16":
+			//Not neccessary to do
 		}
 	}
 
