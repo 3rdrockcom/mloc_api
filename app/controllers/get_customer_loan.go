@@ -32,7 +32,6 @@ func (co *Controllers) GetCustomerLoan(c echo.Context) error {
 	err := db.Select().
 		From("tblCustomerLoanTotal").
 		Where(dbx.HashExp{"fk_customer_id": fkCustomerID}).
-		OrderBy("fk_customer_id").
 		One(&loan)
 
 	if err != nil {

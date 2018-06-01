@@ -110,6 +110,6 @@ func (co *Controllers) PostCustomerAdditional(c echo.Context) error {
 		}
 	} // end of valid postform
 	message := MsgCustomerInfoUpdateSuccess
-	return SendResponse(c, http.StatusOK, message)
+	return SendOKResponse(c, message)
 
 }

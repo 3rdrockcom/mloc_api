@@ -178,7 +178,7 @@ func (co *Controllers) PostCustomerBasic(c echo.Context) error {
 	// Require postform is not validation, displays error
 	if err != nil {
 		message := ErrCustomerInfoIncomplete
-		return SendErrorResponse(c, http.StatusNotFound, message)
+		return SendErrorResponse(c, http.StatusBadRequest, message)
 	}
 
 	// Displays update customer error occur
@@ -190,6 +190,6 @@ func (co *Controllers) PostCustomerBasic(c echo.Context) error {
 
 	// Success to update customer basic
 	message := MsgCustomerInfoSuccess
-	return SendResponse(c, http.StatusOK, message)
+	return SendOKResponse(c, message)
 
 }

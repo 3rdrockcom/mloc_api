@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"net/http"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/labstack/echo"
@@ -48,6 +47,6 @@ func (co *Controllers) PostAcceptTermsAndCondition(c echo.Context) error {
 	}
 
 	message := MsgCustomerInfoUpdateSuccess
-	return SendResponse(c, http.StatusOK, message)
+	return SendOKResponse(c, message)
 
 }
