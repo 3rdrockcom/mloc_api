@@ -119,7 +119,7 @@ func (co *Controllers) PostCreditLineApplication(c echo.Context) error {
 
 	fmt.Println(*limit.Active)
 	// get random key
-	referenceCode := generateRandomKey(5)
+	referenceCode := GenerateRandomKey(5)
 	fmt.Println(referenceCode)
 
 	// Get struct of systemsetting
@@ -229,8 +229,8 @@ func GetLoanCreditLimit(creditLineID string) (LoanCreditLimit, error) {
 
 }
 
-// generateRandomKey return a random key
-func generateRandomKey(length uint8) string {
+// GenerateRandomKey return a random key
+func GenerateRandomKey(length uint8) string {
 	if length == 0 {
 		length = 20
 	}

@@ -23,6 +23,7 @@ func (r *Router) appendRoutes() {
 	v1.POST("/customer/customer_additional", r.c.PostCustomerAdditional, r.mwKeyAuth("default", "R8"))
 	v1.POST("/customer/accept_terms_and_condition", r.c.PostAcceptTermsAndCondition, r.mwKeyAuth("default", "R1"))
 	v1.POST("/customer/credit_line_application", r.c.PostCreditLineApplication, r.mwKeyAuth("default", "R1"))
+	v1.POST("/customer/compute_loan", r.c.PostComputerLoan, r.mwKeyAuth("default", "R1"))
 
 	// Endpoints for lookup
 	v1.GET("/lookup/get_country", r.c.GetCountry, r.mwKeyAuth("default", ""))
