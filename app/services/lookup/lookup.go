@@ -121,3 +121,35 @@ func (ls *LookupService) GetCities(stateCode string) (cities models.Cities, err 
 
 	return
 }
+
+// GetIncomeSource gets information about an income source
+func (ls *LookupService) GetIncomeSource(id int) (incomeSource models.IncomeSource, err error) {
+	err = DB.Select().
+		From(incomeSource.TableName()).
+		Where(dbx.HashExp{"id": id}).
+		One(&incomeSource)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			err = ErrIncomeSourceNotFound
+			return
+		}
+		return
+	}
+
+	return
+}
+
+// GetIncomeSources gets information about an income source
+func (ls *LookupService) GetIncomeSources() (incomeSources models.IncomeSources, err error) {
+	err = DB.Select().
+		From(models.IncomeSource{}.TableName()).
+		All(&incomeSources)
+	if len(incomeSources) == 0 {
+		err = ErrIncomeSourceNotFound
+	}
+	if err != nil {
+		return
+	}
+
+	return
+}

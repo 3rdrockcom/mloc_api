@@ -124,3 +124,37 @@ func (co *Controllers) GetCity(c echo.Context) (err error) {
 	// Send response
 	return SendResponse(c, http.StatusOK, city)
 }
+
+// GetIncomeSource gets the information about an income source
+func (co *Controllers) GetIncomeSource(c echo.Context) (err error) {
+	// Get id
+	queryID := c.QueryParam("id")
+	id, err := strconv.Atoi(queryID)
+	if err != nil && queryID != "" {
+		err = Lookup.ErrInvalidIncomeSourceID
+		return
+	}
+
+	// Initialize lookup service
+	ls := Lookup.New()
+
+	// Get income source
+	if id > 0 {
+		incomeSource, err := ls.GetIncomeSource(id)
+		if err != nil {
+			return err
+		}
+
+		// Send response
+		return SendResponse(c, http.StatusOK, incomeSource)
+	}
+
+	// Get list of income sources
+	incomeSources, err := ls.GetIncomeSources()
+	if err != nil {
+		return err
+	}
+
+	// Send response
+	return SendResponse(c, http.StatusOK, incomeSources)
+}

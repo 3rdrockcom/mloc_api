@@ -48,6 +48,10 @@ func (r *Router) appendErrorHandler() {
 			code = http.StatusBadRequest
 		case Lookup.ErrCityNotFound.Error():
 			code = http.StatusNotFound
+		case Lookup.ErrInvalidIncomeSourceID.Error():
+			code = http.StatusBadRequest
+		case Lookup.ErrIncomeSourceNotFound.Error():
+			code = http.StatusNotFound
 
 		// Unknown error
 		default:

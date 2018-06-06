@@ -23,4 +23,10 @@ var (
 
 	// ErrCityNotFound is error given when a city is not found
 	ErrCityNotFound = errors.New("No city was found")
+
+	// ErrInvalidIncomeSourceID is error given when a income source is not valid
+	ErrInvalidIncomeSourceID = errors.New("Invalid Income Source ID")
+
+	// ErrIncomeSourceNotFound is error given when an income source is not found
+	ErrIncomeSourceNotFound = errors.New("No income source was found")
 )
