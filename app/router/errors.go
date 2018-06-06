@@ -6,6 +6,7 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/controllers"
 	API "github.com/epointpayment/mloc_api_go/app/services/api"
 	Customer "github.com/epointpayment/mloc_api_go/app/services/customer"
+	Lookup "github.com/epointpayment/mloc_api_go/app/services/lookup"
 
 	"github.com/labstack/echo"
 )
@@ -22,11 +23,18 @@ func (r *Router) appendErrorHandler() {
 
 		// Override status code based on error responses
 		switch message {
+		// API Service
 		case API.ErrInvalidAPIKey.Error():
 			code = http.StatusForbidden
+
+		// Customer Service
 		case Customer.ErrInvalidUniqueCustomerID.Error():
 			code = http.StatusForbidden
 		case Customer.ErrCustomerNotFound.Error():
+			code = http.StatusNotFound
+
+		// Lookup Service
+		case Lookup.ErrCountryNotFound.Error():
 			code = http.StatusNotFound
 		}
 
