@@ -22,7 +22,7 @@ type Customer struct {
 
 // TableName gets the name of the database table
 func (c Customer) TableName() string {
-	return "tblcustomerbasicinfo"
+	return "tblCustomerBasicInfo"
 }
 
 // Validate checks if the values in the struct are valid
