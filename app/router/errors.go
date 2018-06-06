@@ -34,8 +34,20 @@ func (r *Router) appendErrorHandler() {
 			code = http.StatusNotFound
 
 		// Lookup Service
+		case Lookup.ErrInvalidCountryID.Error():
+			code = http.StatusBadRequest
 		case Lookup.ErrCountryNotFound.Error():
 			code = http.StatusNotFound
+		case Lookup.ErrInvalidStateID.Error():
+			code = http.StatusBadRequest
+		case Lookup.ErrStateNotFound.Error():
+			code = http.StatusNotFound
+
+		// Unknown error
+		default:
+			if _, ok := err.(*echo.HTTPError); !ok {
+				message = "Internal Error"
+			}
 		}
 
 		// Send error in a specific format
