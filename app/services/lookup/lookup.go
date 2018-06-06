@@ -85,3 +85,39 @@ func (ls *LookupService) GetStates(countryID int) (states models.States, err err
 
 	return
 }
+
+// GetCity gets information about a city
+func (ls *LookupService) GetCity(stateCode string, cityID int) (city models.City, err error) {
+	err = DB.Select().
+		From(city.TableName()).
+		Where(dbx.HashExp{"state_code": stateCode}).Where(dbx.HashExp{
+		"state_code": stateCode,
+		"city_id":    cityID,
+	}).
+		One(&city)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			err = ErrCityNotFound
+			return
+		}
+		return
+	}
+
+	return
+}
+
+// GetCities gets information about every city in a state
+func (ls *LookupService) GetCities(stateCode string) (cities models.Cities, err error) {
+	err = DB.Select().
+		From(models.City{}.TableName()).
+		Where(dbx.HashExp{"state_code": stateCode}).
+		All(&cities)
+	if len(cities) == 0 {
+		err = ErrCityNotFound
+	}
+	if err != nil {
+		return
+	}
+
+	return
+}

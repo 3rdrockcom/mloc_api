@@ -83,3 +83,44 @@ func (co *Controllers) GetState(c echo.Context) (err error) {
 	// Send response
 	return SendResponse(c, http.StatusOK, states)
 }
+
+// GetCity gets the information about a city
+func (co *Controllers) GetCity(c echo.Context) (err error) {
+	// Get state code
+	stateCode := c.QueryParam("state_code")
+	if stateCode == "" {
+		err = Lookup.ErrInvalidStateCode
+		return
+	}
+
+	// Get city id
+	queryCityID := c.QueryParam("city_id")
+	cityID, err := strconv.Atoi(queryCityID)
+	if err != nil && queryCityID != "" {
+		err = Lookup.ErrInvalidCityID
+		return
+	}
+
+	// Initialize lookup service
+	ls := Lookup.New()
+
+	// Get city
+	if cityID > 0 {
+		city, err := ls.GetCity(stateCode, cityID)
+		if err != nil {
+			return err
+		}
+
+		// Send response
+		return SendResponse(c, http.StatusOK, city)
+	}
+
+	// Get list of cities in a state
+	city, err := ls.GetCities(stateCode)
+	if err != nil {
+		return err
+	}
+
+	// Send response
+	return SendResponse(c, http.StatusOK, city)
+}
