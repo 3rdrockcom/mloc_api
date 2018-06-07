@@ -7,7 +7,6 @@ import (
 
 	Customer "github.com/epointpayment/mloc_api_go/app/services/customer"
 	"github.com/labstack/echo"
-	"github.com/shopspring/decimal"
 	null "gopkg.in/guregu/null.v3"
 )
 
@@ -81,10 +80,10 @@ type TransactionsHistoryResponse []TransactionResponse
 
 // TransactionResponse contains information about a loan transaction
 type TransactionResponse struct {
-	CustomerID null.Int        ` json:"fk_customer_id"`
-	Amount     decimal.Decimal `json:"amount"`
-	Type       string          `json:"t_type"`
-	Date       null.String     `json:"t_date"`
+	CustomerID null.Int    ` json:"fk_customer_id"`
+	Amount     null.Float  `json:"amount"`
+	Type       string      `json:"t_type"`
+	Date       null.String `json:"t_date"`
 }
 
 // GetTransactionHistory displays transaction history of a customer based on transaction type
@@ -135,5 +134,28 @@ func (co *Controllers) GetTransactionHistory(c echo.Context) error {
 		})
 	}
 
+	// Send response
 	return SendResponse(c, http.StatusOK, transactionHistoryResponse)
+}
+
+// GetCustomerLoan displays information about a customer's loan total
+func (co *Controllers) GetCustomerLoan(c echo.Context) error {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	// Get customer loan total
+	customerLoanTotal, err := sc.Loan().GetCustomerLoanTotal()
+	if err != nil {
+		return err
+	}
+
+	// Send response
+	return SendResponse(c, http.StatusOK, customerLoanTotal)
+
 }

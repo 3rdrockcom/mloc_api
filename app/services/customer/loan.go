@@ -1,6 +1,8 @@
 package customer
 
 import (
+	"database/sql"
+
 	"github.com/epointpayment/mloc_api_go/app/models"
 	dbx "github.com/go-ozzo/ozzo-dbx"
 )
@@ -28,11 +30,6 @@ func (l *Loan) GetTransactionHistoryByType(transactionType string) (transactionH
 		return
 	}
 
-	// Clean up data
-	for i := range transactionHistory {
-		transactionHistory[i].Amount = transactionHistory[i].Amount.Truncate(2)
-	}
-
 	return
 }
 
@@ -51,9 +48,21 @@ func (l *Loan) GetTransactionHistory() (transactionHistory models.TransactionsHi
 		return
 	}
 
-	// Clean up data
-	for i := range transactionHistory {
-		transactionHistory[i].Amount = transactionHistory[i].Amount.Truncate(2)
+	return
+}
+
+// GetCustomerLoanTotal gets all loan transactions for a customer
+func (l *Loan) GetCustomerLoanTotal() (loanTotal models.LoanTotal, err error) {
+	err = DB.Select().
+		From(loanTotal.TableName()).
+		Where(dbx.HashExp{"fk_customer_id": l.cs.CustomerID}).
+		One(&loanTotal)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			err = ErrLoanNotFound
+		}
+		return
 	}
 
 	return

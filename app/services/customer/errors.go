@@ -9,6 +9,9 @@ var (
 	// ErrCustomerNotFound is an error for a non-existent customer
 	ErrCustomerNotFound = errors.New("Customer not found")
 
-	// ErrTransactionNotFound is error given when no transactions were found
+	// ErrTransactionNotFound is an error given when no transactions were found
 	ErrTransactionNotFound = errors.New("No transaction(s) were found")
+
+	// ErrLoanNotFound is an error given when a customer loan is not found
+	ErrLoanNotFound = errors.New("No customer loan was found")
 )

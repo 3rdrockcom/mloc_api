@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/shopspring/decimal"
 	null "gopkg.in/guregu/null.v3"
 )
 
@@ -15,8 +14,8 @@ func (t TransactionsHistory) TableName() string {
 
 // Transaction contains information about a loan transaction
 type Transaction struct {
-	CustomerID null.Int        `db:"fk_customer_id" json:"fk_customer_id"`
-	Amount     decimal.Decimal `db:"amount" json:"amount"`
-	Type       string          `db:"t_type" json:"t_type"`
-	Date       null.Time       `db:"t_date" json:"t_date"`
+	CustomerID null.Int   `db:"fk_customer_id" json:"fk_customer_id"`
+	Amount     null.Float `db:"amount" json:"amount"`
+	Type       string     `db:"t_type" json:"t_type"`
+	Date       null.Time  `db:"t_date" json:"t_date"`
 }
