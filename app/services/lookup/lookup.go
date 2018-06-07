@@ -139,13 +139,45 @@ func (ls *LookupService) GetIncomeSource(id int) (incomeSource models.IncomeSour
 	return
 }
 
-// GetIncomeSources gets information about an income source
+// GetIncomeSources gets information about every income source
 func (ls *LookupService) GetIncomeSources() (incomeSources models.IncomeSources, err error) {
 	err = DB.Select().
 		From(models.IncomeSource{}.TableName()).
 		All(&incomeSources)
 	if len(incomeSources) == 0 {
 		err = ErrIncomeSourceNotFound
+	}
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// GetPayFrequency gets information about a pay frequency
+func (ls *LookupService) GetPayFrequency(id int) (payFrequency models.PayFrequency, err error) {
+	err = DB.Select().
+		From(payFrequency.TableName()).
+		Where(dbx.HashExp{"id": id}).
+		One(&payFrequency)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			err = ErrPayFrequencyNotFound
+			return
+		}
+		return
+	}
+
+	return
+}
+
+// GetPayFrequencies gets information about every pay frequency
+func (ls *LookupService) GetPayFrequencies() (payFrequencies models.PayFrequencies, err error) {
+	err = DB.Select().
+		From(models.PayFrequency{}.TableName()).
+		All(&payFrequencies)
+	if len(payFrequencies) == 0 {
+		err = ErrPayFrequencyNotFound
 	}
 	if err != nil {
 		return

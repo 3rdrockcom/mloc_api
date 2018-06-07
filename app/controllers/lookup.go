@@ -158,3 +158,37 @@ func (co *Controllers) GetIncomeSource(c echo.Context) (err error) {
 	// Send response
 	return SendResponse(c, http.StatusOK, incomeSources)
 }
+
+// GetPayFrequency gets the information about a pay frequency
+func (co *Controllers) GetPayFrequency(c echo.Context) (err error) {
+	// Get id
+	queryID := c.QueryParam("id")
+	id, err := strconv.Atoi(queryID)
+	if err != nil && queryID != "" {
+		err = Lookup.ErrInvalidIPayFrequencyID
+		return
+	}
+
+	// Initialize lookup service
+	ls := Lookup.New()
+
+	// Get pay frequency
+	if id > 0 {
+		payFrequency, err := ls.GetPayFrequency(id)
+		if err != nil {
+			return err
+		}
+
+		// Send response
+		return SendResponse(c, http.StatusOK, payFrequency)
+	}
+
+	// Get list of pay frequencies
+	payFrequencies, err := ls.GetPayFrequencies()
+	if err != nil {
+		return err
+	}
+
+	// Send response
+	return SendResponse(c, http.StatusOK, payFrequencies)
+}

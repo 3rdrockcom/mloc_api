@@ -24,9 +24,15 @@ var (
 	// ErrCityNotFound is error given when a city is not found
 	ErrCityNotFound = errors.New("No city was found")
 
-	// ErrInvalidIncomeSourceID is error given when a income source is not valid
+	// ErrInvalidIncomeSourceID is error given when an income source is not valid
 	ErrInvalidIncomeSourceID = errors.New("Invalid Income Source ID")
 
 	// ErrIncomeSourceNotFound is error given when an income source is not found
 	ErrIncomeSourceNotFound = errors.New("No income source was found")
+
+	// ErrInvalidIPayFrequencyID is error given when a pay frequency ID is not valid
+	ErrInvalidIPayFrequencyID = errors.New("Invalid Pay Frequency ID")
+
+	// ErrPayFrequencyNotFound is error given when pay frequency is not found
+	ErrPayFrequencyNotFound = errors.New("No pay frequency was found")
 )
