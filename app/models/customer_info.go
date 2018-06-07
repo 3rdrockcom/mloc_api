@@ -40,7 +40,7 @@ type CustomerInfo struct {
 	Key                null.String `db:"key" json:"key"`
 	CreditLimit        null.Float  `db:"credit_limit" json:"credit_limit"`
 	AvailableCredit    null.Float  `db:"available_credit" json:"available_credit"`
-	IsSuspended        null.String `db:"is_suspended" json:"is_suspended"` // may need to change enum type
+	IsSuspended        string      `db:"is_suspended" json:"is_suspended"`
 }
 
 // TableName gets the name of the database table

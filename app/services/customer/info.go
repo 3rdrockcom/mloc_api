@@ -30,27 +30,14 @@ func (i *Info) Get() (customer *models.Customer, err error) {
 	return
 }
 
-// CustomerDetails holds detailed customer information
-type CustomerDetails struct {
-	ID                    int    `json:"id" db:"customer_id"`
-	FirstName             string `json:"first_name"`
-	LastName              string `json:"last_name"`
-	Email                 string `json:"email"`
-	ProgramID             int    `json:"program_id"`
-	ProgramCustomerID     int    `json:"program_customer_id"`
-	ProgramCustomerMobile string `json:"program_customer_mobile"`
-	CustomerUniqueID      string `json:"cust_unique_id" db:"cust_unique_id"`
-	Key                   string `json:"key" db:"key"`
-}
-
 // GetDetails gets detailed customer information
-func (i *Info) GetDetails() (customerDetails *CustomerDetails, err error) {
-	customerDetails = new(CustomerDetails)
+func (i *Info) GetDetails() (customerInfo *models.CustomerInfo, err error) {
+	customerInfo = new(models.CustomerInfo)
 
 	err = DB.Select().
 		From("view_customer_info").
 		Where(dbx.HashExp{"customer_id": i.cs.CustomerID}).
-		One(customerDetails)
+		One(customerInfo)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			err = ErrCustomerNotFound

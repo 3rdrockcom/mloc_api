@@ -8,8 +8,8 @@ import (
 	"github.com/labstack/echo"
 )
 
-// GetCustomer gets customer information
-func (co Controllers) GetCustomer(c echo.Context) error {
+// GetCustomer displays detailed customer information
+func (co *Controllers) GetCustomer(c echo.Context) error {
 	// Get customer ID
 	customerID := c.Get("customerID").(int)
 
@@ -19,14 +19,22 @@ func (co Controllers) GetCustomer(c echo.Context) error {
 		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
-	// Get customer information
-	customer, err := sc.Info().GetDetails()
+	// Get detailed customer information
+	customerInfo, err := sc.Info().GetDetails()
 	if err != nil {
 		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
-	// Send response
-	return SendResponse(c, http.StatusOK, customer)
+	switch customerInfo.IsSuspended {
+	case "YES":
+		customerInfo.IsSuspended = "1"
+	case "NO":
+		fallthrough
+	default:
+		customerInfo.IsSuspended = "0"
+	}
+
+	return SendResponse(c, http.StatusOK, customerInfo)
 }
 
 // PostAddCustomer updates customer information

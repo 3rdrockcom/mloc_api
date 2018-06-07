@@ -14,8 +14,7 @@ func (r *Router) appendRoutes() {
 	v1.GET("/config/generate_customer_key", r.c.GenerateCustomerKey, r.mwKeyAuth("registration", "cust_unique_id"))
 
 	// Endpoints for customer
-	//v1.GET("/customer/get_customer", r.c.GetCustomer, r.mwKeyAuth("default", "cust_unique_id"))
-	v1.GET("/customer/get_customer", r.c.GetCustomerInfo, r.mwKeyAuth("default", "cust_unique_id"))
+	v1.GET("/customer/get_customer", r.c.GetCustomer, r.mwKeyAuth("default", "cust_unique_id"))
 	v1.GET("/customer/get_transaction_history", r.c.GetTransactionHistory, r.mwKeyAuth("default", "R1"))
 	v1.GET("/customer/get_customer_loan", r.c.GetCustomerLoan, r.mwKeyAuth("default", "R1"))
 	// v1.POST("/customer/customer_basic", r.c.PostAddCustomer, r.mwKeyAuth("default"))
