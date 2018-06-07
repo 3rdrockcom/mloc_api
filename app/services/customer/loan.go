@@ -67,3 +67,23 @@ func (l *Loan) GetCustomerLoanTotal() (loanTotal models.LoanTotal, err error) {
 
 	return
 }
+
+// AcceptedCustomerAgreement sets customer agreement terms and conditions flag to 1
+func (l *Loan) AcceptedCustomerAgreement() (err error) {
+	tx, err := DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Update(
+		models.CustomerAgreement{}.TableName(),
+		dbx.Params{"term_and_condition": 1},
+		dbx.HashExp{"fk_customer_id": l.cs.CustomerID},
+	).Execute()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
+}

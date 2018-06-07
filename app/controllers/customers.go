@@ -157,5 +157,28 @@ func (co *Controllers) GetCustomerLoan(c echo.Context) error {
 
 	// Send response
 	return SendResponse(c, http.StatusOK, customerLoanTotal)
+}
+
+// PostAcceptTermsAndCondition accepts the term and condition
+// the value of accept will store in tblcustomeragreement
+func (co *Controllers) PostAcceptTermsAndConditions(c echo.Context) error {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	// Get customer loan total
+	err = sc.Loan().AcceptedCustomerAgreement()
+	if err != nil {
+		return err
+	}
+
+	// Send response
+	msg := Customer.MsgCustomerAcceptedAgreement
+	return SendOKResponse(c, msg)
 
 }
