@@ -12,6 +12,7 @@ var DB *dbx.DB
 type CustomerService struct {
 	CustomerID int
 	info       *Info
+	loan       *Loan
 }
 
 // Validate checks if the values in the struct are valid
@@ -34,10 +35,19 @@ func New(customerID int) (cs *CustomerService, err error) {
 		cs: cs,
 	}
 
+	cs.loan = &Loan{
+		cs: cs,
+	}
+
 	return
 }
 
 // Info gets customer info methods
 func (cs *CustomerService) Info() *Info {
 	return cs.info
+}
+
+// Loan gets customer loan methods
+func (cs *CustomerService) Loan() *Loan {
+	return cs.loan
 }
