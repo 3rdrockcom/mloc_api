@@ -1,6 +1,8 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Version is the application semantic version
 var Version string
@@ -9,6 +11,13 @@ var Version string
 var Build string
 
 func init() {
+	if Version == "" {
+		Version = "unknown"
+	}
+	if Build == "" {
+		Build = "unknown"
+	}
+
 	fmt.Println("Version: ", Version)
 	fmt.Println("Build: ", Build)
 }
