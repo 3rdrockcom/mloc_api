@@ -344,8 +344,7 @@ func (co *Controllers) GetCustomerLoan(c echo.Context) error {
 	return SendResponse(c, http.StatusOK, customerLoanTotal)
 }
 
-// PostAcceptTermsAndCondition accepts the term and condition
-// the value of accept will store in tblcustomeragreement
+// PostAcceptTermsAndConditions is called when a customer has accepted the terms and conditions
 func (co *Controllers) PostAcceptTermsAndConditions(c echo.Context) error {
 	// Get customer ID
 	customerID := c.Get("customerID").(int)
