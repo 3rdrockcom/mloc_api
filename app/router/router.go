@@ -20,8 +20,11 @@ type Router struct {
 func NewRouter(c *controllers.Controllers) *Router {
 	r := &Router{}
 
-	r.e = echo.New()
 	r.c = c
+
+	// Initialize router
+	r.e = echo.New()
+	r.e.HideBanner = true
 
 	r.appendMiddleware()
 	r.appendRoutes()
