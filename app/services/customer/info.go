@@ -64,3 +64,20 @@ func (i *Info) UpdateCustomerBasic(customerBasic *models.CustomerBasic, fields .
 
 	return tx.Commit()
 }
+
+// UpdateCustomerAdditional updates additional customer information
+func (i *Info) UpdateCustomerAdditional(customerAdditional *models.CustomerAdditional, fields ...string) (err error) {
+	tx, err := DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	customerAdditional.ID = i.cs.CustomerID
+	err = tx.Model(customerAdditional).Update(fields...)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
+}

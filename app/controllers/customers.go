@@ -43,12 +43,11 @@ func (co *Controllers) GetCustomer(c echo.Context) error {
 
 // CustomerBasicRequest contains basic information of a customer
 type CustomerBasicRequest struct {
-	ID           int
 	FirstName    string `form:"R1"`
 	MiddleName   string `form:"R2"`
 	LastName     string `form:"R3"`
 	Suffix       string `form:"R4"`
-	Birthday     string `form:"R5"` // may need to change date type
+	Birthday     string `form:"R5"`
 	Address1     string `form:"R6"`
 	Address2     string `form:"R7"`
 	Country      int64  `form:"R8"`
@@ -71,7 +70,7 @@ func (cb CustomerBasicRequest) Validate() error {
 	)
 }
 
-// PostCustomerBasic updates customer information
+// PostCustomerBasic updates customer basic information
 func (co Controllers) PostCustomerBasic(c echo.Context) error {
 	// Get customer ID
 	customerID := c.Get("customerID").(int)
@@ -157,6 +156,102 @@ func (co Controllers) PostCustomerBasic(c echo.Context) error {
 
 	// Update information
 	if err = sc.Info().UpdateCustomerBasic(customerBasic, fields...); err != nil {
+		err = Customer.ErrProblemOccured
+		return err
+	}
+
+	// Send response
+	return SendOKResponse(c, Customer.MsgInfoUpdated)
+}
+
+// CustomerAdditionalRequest contains additional information of a customer
+type CustomerAdditionalRequest struct {
+	CompanyName      string  `form:"R1"`
+	PhoneNumber      string  `form:"R2"`
+	NetPayPerCheck   float64 `form:"R3"`
+	IncomeSource     int64   `form:"R4"`
+	PayFrequency     int64   `form:"R5"`
+	NextPayDate      string  `form:"R6"`
+	FollowingPayDate string  `form:"R7"`
+}
+
+// Validate checks postform required is validation
+func (ca CustomerAdditionalRequest) Validate() error {
+	return validation.ValidateStruct(&ca,
+		validation.Field(&ca.CompanyName, validation.Required),
+		validation.Field(&ca.NetPayPerCheck, validation.Required),
+		validation.Field(&ca.IncomeSource, validation.Required),
+		validation.Field(&ca.PayFrequency, validation.Required),
+		validation.Field(&ca.NextPayDate, validation.Date("2006-01-02")),
+		validation.Field(&ca.FollowingPayDate, validation.Date("2006-01-02")),
+	)
+}
+
+// PostCustomerAdditional updates customer additional information
+func (co Controllers) PostCustomerAdditional(c echo.Context) error {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	cr := CustomerAdditionalRequest{}
+
+	// Bind data to struct
+	if err = c.Bind(&cr); err != nil {
+		err = Customer.ErrProblemOccured
+		return err
+	}
+
+	// Validate struct
+	if err = cr.Validate(); err != nil {
+		err = Customer.ErrCustomerIncompleteInfo
+		return err
+	}
+
+	// Prepare customer information
+	customerAdditional := new(models.CustomerAdditional)
+	customerAdditional.ID = customerID
+
+	fields := []string{}
+	formKeys, _ := c.FormParams() // previously called in form binding, no need to check errors
+	for formKey := range formKeys {
+		field := ""
+
+		switch formKey {
+		case "R1":
+			field = "CompanyName"
+			customerAdditional.CompanyName = null.StringFrom(cr.CompanyName)
+		case "R2":
+			field = "PhoneNumber"
+			customerAdditional.PhoneNumber = null.StringFrom(cr.PhoneNumber)
+		case "R3":
+			field = "NetPayPerCheck"
+			customerAdditional.NetPayPerCheck = null.FloatFrom(cr.NetPayPerCheck)
+		case "R4":
+			field = "IncomeSource"
+			customerAdditional.IncomeSource = null.IntFrom(cr.IncomeSource)
+		case "R5":
+			field = "PayFrequency"
+			customerAdditional.PayFrequency = null.IntFrom(cr.PayFrequency)
+		case "R6":
+			field = "NextPayDate"
+			customerAdditional.NextPayDate = null.StringFrom(cr.NextPayDate)
+		case "R7":
+			field = "FollowingPayDate"
+			customerAdditional.FollowingPayDate = null.StringFrom(cr.FollowingPayDate)
+		}
+
+		if field != "" {
+			fields = append(fields, field)
+		}
+	}
+
+	// Update information
+	if err = sc.Info().UpdateCustomerAdditional(customerAdditional, fields...); err != nil {
 		err = Customer.ErrProblemOccured
 		return err
 	}
