@@ -48,20 +48,19 @@ func (i *Info) GetDetails() (customerInfo *models.CustomerInfo, err error) {
 	return
 }
 
-// Update updates customer information
-func (i *Info) Update(customer *models.Customer) (err error) {
+// UpdateCustomerBasic updates basic customer information
+func (i *Info) UpdateCustomerBasic(customerBasic *models.CustomerBasic, fields ...string) (err error) {
 	tx, err := DB.Begin()
 	if err != nil {
 		return err
 	}
 
-	customer.ID = i.cs.CustomerID
-	err = tx.Model(customer).Update()
+	customerBasic.ID = i.cs.CustomerID
+	err = tx.Model(customerBasic).Update(fields...)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }

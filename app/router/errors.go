@@ -32,6 +32,10 @@ func (r *Router) appendErrorHandler() {
 			code = http.StatusForbidden
 		case Customer.ErrCustomerNotFound.Error():
 			code = http.StatusNotFound
+		case Customer.ErrCustomerIncompleteInfo.Error():
+			code = http.StatusBadRequest
+		case Customer.ErrProblemOccured.Error():
+			code = http.StatusBadRequest
 
 		// Lookup Service
 		case Lookup.ErrInvalidCountryID.Error():

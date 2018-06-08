@@ -14,4 +14,10 @@ var (
 
 	// ErrLoanNotFound is an error given when a customer loan is not found
 	ErrLoanNotFound = errors.New("No customer loan was found")
+
+	// ErrCustomerIncompleteInfo is given if customerinformation is not complete
+	ErrCustomerIncompleteInfo = errors.New("Please provide complete customer information")
+
+	// ErrProblemOccured is given if it can't get data from database or can't covert input to string
+	ErrProblemOccured = errors.New("Some problems occurred, please try again")
 )
