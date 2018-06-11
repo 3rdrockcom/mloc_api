@@ -13,6 +13,7 @@ type CustomerService struct {
 	CustomerID int
 	info       *Info
 	loan       *Loan
+	settings   *Settings
 }
 
 // Validate checks if the values in the struct are valid
@@ -39,6 +40,10 @@ func New(customerID int) (cs *CustomerService, err error) {
 		cs: cs,
 	}
 
+	cs.settings = &Settings{
+		cs: cs,
+	}
+
 	return
 }
 
@@ -50,4 +55,9 @@ func (cs *CustomerService) Info() *Info {
 // Loan gets customer loan methods
 func (cs *CustomerService) Loan() *Loan {
 	return cs.loan
+}
+
+// Settings gets customer setting methods
+func (cs *CustomerService) Settings() *Settings {
+	return cs.settings
 }

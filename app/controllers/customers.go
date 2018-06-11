@@ -366,3 +366,25 @@ func (co *Controllers) PostAcceptTermsAndConditions(c echo.Context) error {
 	return SendOKResponse(c, msg)
 
 }
+
+// PostCreditLineApplication processes a credit line application
+func (co *Controllers) PostCreditLineApplication(c echo.Context) error {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	// Get customer loan total
+	_, err = sc.Loan().ProcessCreditLineApplication()
+	if err != nil {
+		return err
+	}
+
+	// Send response
+	msg := Customer.MsgCustomerAddedCreditLine
+	return SendOKResponse(c, msg)
+}

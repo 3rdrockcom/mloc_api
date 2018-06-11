@@ -12,10 +12,13 @@ type Configuration struct {
 	Application  Application
 	Server       Server
 	DB           Database
+	Mail         Mail
+	SMS          SMS
 }
 
 // Application contains application information
 type Application struct {
+	Name    string
 	Build   string
 	Version string
 }
@@ -38,6 +41,28 @@ type Database struct {
 	DSN      string
 }
 
+// Mail contains mail information
+type Mail struct {
+	Driver      string
+	Host        string
+	Port        int64
+	Encryption  string
+	Username    string
+	Password    string
+	FromName    string
+	FromAddress string
+	ToAddress   string
+}
+
+// SMS contains sms information
+type SMS struct {
+	Driver   string
+	Username string
+	Password string
+	FromName string
+	ToMobile string
+}
+
 // cfg contains the processed configuration values
 var cfg Configuration
 
@@ -47,6 +72,7 @@ func New() (Configuration, error) {
 	cfg.Environiment = envy.Get("ENVIRONMENT", "development")
 
 	// Application
+	cfg.Application.Name = envy.Get("NAME", "app")
 	cfg.Application.Build = Build
 	cfg.Application.Version = Version
 
@@ -63,6 +89,28 @@ func New() (Configuration, error) {
 	cfg.DB.Password, _ = envy.MustGet("DB_PASSWORD")
 	cfg.DB.Flags, _ = envy.MustGet("DB_FLAGS")
 	cfg.DB.DSN = generateDSN(cfg.DB)
+
+	// Mail
+	cfg.Mail.Driver, _ = envy.MustGet("MAIL_DRIVER")
+	cfg.Mail.Host = envy.Get("MAIL_HOST", "localhost")
+	cfg.Mail.Port, _ = strconv.ParseInt(envy.Get("MAIL_PORT", "3306"), 10, 64)
+	cfg.Mail.Encryption, _ = envy.MustGet("MAIL_ENCRYPTION")
+	cfg.Mail.Username, _ = envy.MustGet("MAIL_USERNAME")
+	cfg.Mail.Password, _ = envy.MustGet("MAIL_PASSWORD")
+	cfg.Mail.FromName, _ = envy.MustGet("MAIL_NAME")
+	cfg.Mail.FromAddress, _ = envy.MustGet("MAIL_ADDRESS")
+
+	// SMS
+	cfg.SMS.Driver, _ = envy.MustGet("SMS_DRIVER")
+	cfg.SMS.Username, _ = envy.MustGet("SMS_USERNAME")
+	cfg.SMS.Password, _ = envy.MustGet("SMS_PASSWORD")
+	cfg.SMS.FromName, _ = envy.MustGet("SMS_NAME")
+
+	// For development only
+	if IsDev() {
+		cfg.Mail.ToAddress = envy.Get("MAIL_ADDRESS_TO_OVERRIDE", "")
+		cfg.SMS.ToMobile = envy.Get("SMS_MOBILE_TO_OVERRIDE", "")
+	}
 
 	return cfg, nil
 }
