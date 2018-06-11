@@ -217,6 +217,81 @@ func (l *Loan) ProcessCreditLineApplication() (isApproved bool, err error) {
 	return
 }
 
+// ComputedFee contains information about a loan
+type ComputedLoan struct {
+	AvailableCredit  float64 `json:"available_credit"`
+	Amount           float64 `json:"amount"`
+	Fee              float64 `json:"fee"`
+	Interest         float64 `json:"interest"`
+	DateApplied      string  `json:"date_applied"`
+	DueDate          string  `json:"due_date"`
+	DueDateFormatted string  `json:"due_date_formatted"`
+	TotalAmount      float64 `json:"total_amount"`
+}
+
+// ComputeLoanApplication calculates information about a loan
+func (l *Loan) ComputeLoanApplication(baseAmount float64) (computed ComputedLoan, err error) {
+	// Get detailed customer information
+	customer, err := l.cs.Info().GetDetails()
+	if err != nil {
+		return
+	}
+	availableCredit := customer.AvailableCredit.Float64
+
+	// Check if requested loan amount is a valid amount
+	if baseAmount > availableCredit {
+		err = ErrNotEnoughAvailableCredit
+		return
+	}
+
+	// Get loan fee
+	fee, err := l.cs.Loan().GetFee()
+	if err != nil {
+		return
+	}
+
+	// Calculate fee
+	feeAmount := fee.Fixed.ValueOrZero()
+	if fee.Percentage.ValueOrZero() > 0.0 {
+		feeAmount = (fee.Percentage.ValueOrZero() / 100) * baseAmount
+	}
+
+	// Get loan interest
+	interest, err := l.cs.Loan().GetInterest()
+	if err != nil {
+		return
+	}
+
+	// Calculate interest
+	interestAmount := interest.Fixed.ValueOrZero()
+	if interest.Percentage.Float64 > 0.0 {
+		interestAmount = (interest.Percentage.ValueOrZero() / 100) * baseAmount
+	}
+
+	// Get loan credit limit information
+	creditLimit, err := l.cs.Loan().GetLoanCreditLimit(int(customer.CreditLineID.Int64))
+	if err != nil {
+		err = ErrLoanCreditLimitNotFound
+		return
+	}
+
+	// Determine due date
+	t := time.Now().UTC()
+	dueDate := t.AddDate(0, 0, int(creditLimit.NumberOfDays.Int64))
+
+	// Prepare data
+	computed.AvailableCredit = availableCredit
+	computed.Amount = numberFormat(baseAmount, 2)
+	computed.Fee = numberFormat(feeAmount, 2)
+	computed.Interest = numberFormat(interestAmount, 2)
+	computed.DateApplied = t.Format("2006-01-02 15:04:05")
+	computed.DueDate = dueDate.Format("2006-01-02 15:04:05")
+	computed.DueDateFormatted = dueDate.Format("01-02-2006 03:04 PM")
+	computed.TotalAmount = computed.Amount + computed.Fee + computed.Interest
+
+	return
+}
+
 // GetLoanCreditLimit gets the  loan credit limit for customer
 func (l *Loan) GetLoanCreditLimit(id int) (loanCreditLimit models.LoanCreditLimit, err error) {
 	q := DB.Select().
@@ -231,6 +306,38 @@ func (l *Loan) GetLoanCreditLimit(id int) (loanCreditLimit models.LoanCreditLimi
 
 	err = q.One(&loanCreditLimit)
 	if err != nil {
+		return
+	}
+
+	return
+}
+
+// GetFee gets loan fee information
+func (l *Loan) GetFee() (fee models.Fee, err error) {
+	err = DB.Select().
+		From(fee.TableName()).
+		Where(dbx.HashExp{"active": "YES"}).
+		One(&fee)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			err = ErrLoanFeeNotFound
+		}
+		return
+	}
+
+	return
+}
+
+// GetInterest gets loan interest information
+func (l *Loan) GetInterest() (interest models.Interest, err error) {
+	err = DB.Select().
+		From(interest.TableName()).
+		Where(dbx.HashExp{"active": "YES"}).
+		One(&interest)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			err = ErrLoanInterestNotFound
+		}
 		return
 	}
 

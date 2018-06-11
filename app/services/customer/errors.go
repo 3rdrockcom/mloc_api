@@ -15,6 +15,21 @@ var (
 	// ErrLoanNotFound is an error given when a customer loan is not found
 	ErrLoanNotFound = errors.New("No customer loan was found")
 
+	// ErrLoanCreditLimitNotFound is an error given when a loan credit limit entry is not found
+	ErrLoanCreditLimitNotFound = errors.New("No loan credit limit entry was found")
+
+	// ErrLoanInterestNotFound is an error given when a loan interest entry is not found
+	ErrLoanInterestNotFound = errors.New("No loan interest entry was found")
+
+	// ErrLoanFeeNotFound is an error given when a loan fee entry is not found
+	ErrLoanFeeNotFound = errors.New("No loan fee entry was found")
+
+	// ErrInvalidLoanAmount is an error given when a loan amount is not valid
+	ErrInvalidLoanAmount = errors.New("Invalid loan amount")
+
+	// ErrNotEnoughAvailableCredit is given when loan amount is larger than the available credit
+	ErrNotEnoughAvailableCredit = errors.New("You dont have enough available credit")
+
 	// ErrCustomerIncompleteInfo is given if customerinformation is not complete
 	ErrCustomerIncompleteInfo = errors.New("Please provide complete customer information")
 

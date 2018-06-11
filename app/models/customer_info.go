@@ -41,6 +41,7 @@ type CustomerInfo struct {
 	CreditLimit        null.Float  `db:"credit_limit" json:"credit_limit"`
 	AvailableCredit    null.Float  `db:"available_credit" json:"available_credit"`
 	IsSuspended        string      `db:"is_suspended" json:"is_suspended"`
+	CreditLineID       null.Int    `json:"-"`
 }
 
 // TableName gets the name of the database table

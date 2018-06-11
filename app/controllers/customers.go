@@ -388,3 +388,50 @@ func (co *Controllers) PostCreditLineApplication(c echo.Context) error {
 	msg := Customer.MsgCustomerAddedCreditLine
 	return SendOKResponse(c, msg)
 }
+
+// PostComputeLoanRequest contains information about a loan amount
+type PostComputeLoanRequest struct {
+	LoanAmount float64 `form:"R2"`
+}
+
+// Validate checks postform required is validation
+func (clr PostComputeLoanRequest) Validate() error {
+	return validation.ValidateStruct(&clr,
+		validation.Field(&clr.LoanAmount, validation.Required),
+	)
+}
+
+// PostComputeLoan computes a loan application
+func (co *Controllers) PostComputeLoan(c echo.Context) error {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	clr := PostComputeLoanRequest{}
+
+	// Bind data to struct
+	if err = c.Bind(&clr); err != nil {
+		err = Customer.ErrInvalidLoanAmount
+		return err
+	}
+
+	// Validate struct
+	if err = clr.Validate(); err != nil {
+		err = Customer.ErrInvalidLoanAmount
+		return err
+	}
+
+	// Calculate loan application
+	computedLoan, err := sc.Loan().ComputeLoanApplication(clr.LoanAmount)
+	if err != nil {
+		return err
+	}
+
+	// Send response
+	return SendResponse(c, http.StatusOK, computedLoan)
+}
