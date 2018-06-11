@@ -7,6 +7,9 @@ import (
 	"github.com/labstack/echo"
 )
 
+// CustomerInfos array contains customerInfo struct
+type CustomerInfos []CustomerInfo // this is for GetCustomerLoanList function
+
 // CustomerInfo contains information about fkCustomerId
 type CustomerInfo struct {
 	CustUniqueID     *string  `db:"cust_unique_id" json:"cust_unique_id"`

@@ -14,10 +14,13 @@ import (
 
 // GetCustomer contains informatin of vew_customer_info
 type GetCustomer struct {
-	CustomerID      int
-	AvailableCredit *float64
-	CustUniqueID    *string
-	CreditLineID    *int
+	CustomerID        int
+	FirstName         *string
+	AvailableCredit   *float64
+	CustUniqueID      *string
+	CreditLineID      *int
+	ProgramCustomerID *int
+	MobileNumber      *string
 }
 
 // Fee contains informatin of tblfee
@@ -87,7 +90,7 @@ func (co *Controllers) PostComputerLoan(c echo.Context) error {
 
 	// call function to compute process amount and duedate
 	update, err := ComputerLoanApplication(customerID, custUniqueID, loanAmount)
-	fmt.Println(err)
+	//	fmt.Println(err)
 	if err != nil {
 		message := ErrNotEnoughCredit
 		return SendErrorResponse(c, http.StatusBadRequest, message)
