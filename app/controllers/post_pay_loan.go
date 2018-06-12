@@ -223,7 +223,7 @@ func payLoanProcess(custID int, custUniqueID string, amount float64) ReturnMsg {
 			*loanUpdate.TotalPaidFee = *row.TotalPaidFee + fee
 			*loanUpdate.IsPaid = isPaid
 			*loanUpdate.TotalPaidAmount = *row.TotalPaidAmount + (fee + baseAmount)
-			err = db.Model(loanUpdate).Update() //TODO: specific update id
+			err = db.Model(&loanUpdate).Update() //TODO: specific update id
 			if err != nil {
 				returnMsg.StatusMsg = ErrProcessLoanPayment
 				returnMsg.Status = false
@@ -241,7 +241,7 @@ func payLoanProcess(custID int, custUniqueID string, amount float64) ReturnMsg {
 			*settlement.FeeAmount = fee
 			settlement.CreatedDate = &date
 
-			err = db.Model(settlement).Update()
+			err = db.Model(&settlement).Update()
 			if err != nil {
 				returnMsg.StatusMsg = ErrProcessLoanPayment
 				returnMsg.Status = false
