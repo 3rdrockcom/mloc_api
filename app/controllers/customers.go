@@ -389,7 +389,7 @@ func (co *Controllers) PostCreditLineApplication(c echo.Context) error {
 	return SendOKResponse(c, msg)
 }
 
-// PostComputeLoanRequest contains information about a loan amount
+// PostComputeLoanRequest contains information for computing a loan application
 type PostComputeLoanRequest struct {
 	LoanAmount float64 `form:"R2"`
 }
@@ -397,7 +397,7 @@ type PostComputeLoanRequest struct {
 // Validate checks postform required is validation
 func (clr PostComputeLoanRequest) Validate() error {
 	return validation.ValidateStruct(&clr,
-		validation.Field(&clr.LoanAmount, validation.Required),
+		validation.Field(&clr.LoanAmount, validation.Required, validation.Min(0.00)),
 	)
 }
 
@@ -434,4 +434,52 @@ func (co *Controllers) PostComputeLoan(c echo.Context) error {
 
 	// Send response
 	return SendResponse(c, http.StatusOK, computedLoan)
+}
+
+// PostLoanApplicationRequest contains information for a loan application
+type PostLoanApplicationRequest struct {
+	LoanAmount float64 `form:"R2"`
+}
+
+// Validate checks postform required is validation
+func (lar PostLoanApplicationRequest) Validate() error {
+	return validation.ValidateStruct(&lar,
+		validation.Field(&lar.LoanAmount, validation.Required, validation.Min(0.00)),
+	)
+}
+
+// PostLoanApplication processes a loan application
+func (co *Controllers) PostLoanApplication(c echo.Context) error {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	lar := PostLoanApplicationRequest{}
+
+	// Bind data to struct
+	if err = c.Bind(&lar); err != nil {
+		err = Customer.ErrInvalidLoanAmount
+		return err
+	}
+
+	// Validate struct
+	if err = lar.Validate(); err != nil {
+		err = Customer.ErrInvalidLoanAmount
+		return err
+	}
+
+	// Calculate loan application
+	err = sc.Loan().ProcessLoanApplication(lar.LoanAmount)
+	if err != nil {
+		return err
+	}
+
+	// Send response
+	msg := Customer.MsgCustomerAppliedForLoan
+	return SendOKResponse(c, msg)
 }

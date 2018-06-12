@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/gommon/log"
 
 	"github.com/epointpayment/mloc_api_go/app/models"
+	EPOINT "github.com/epointpayment/mloc_api_go/app/services/epoint"
 	Notifications "github.com/epointpayment/mloc_api_go/app/services/notifications"
 	Mail "github.com/epointpayment/mloc_api_go/app/services/notifications/mail"
 	SMS "github.com/epointpayment/mloc_api_go/app/services/notifications/sms"
@@ -106,7 +107,7 @@ func (l *Loan) ProcessCreditLineApplication() (isApproved bool, err error) {
 		return
 	}
 
-	// Check if credit is auto approve or manual
+	// Check if credit approval is automatic or manual
 	creditApproval, err := l.cs.Settings().Get(1)
 	if err != nil {
 		return
@@ -172,7 +173,7 @@ func (l *Loan) ProcessCreditLineApplication() (isApproved bool, err error) {
 		return
 	}
 
-	// Initialize customer service
+	// Initialize notifications service
 	sn := Notifications.New()
 	if err != nil {
 		return
@@ -217,7 +218,7 @@ func (l *Loan) ProcessCreditLineApplication() (isApproved bool, err error) {
 	return
 }
 
-// ComputedFee contains information about a loan
+// ComputedLoan contains information about a loan
 type ComputedLoan struct {
 	AvailableCredit  float64 `json:"available_credit"`
 	Amount           float64 `json:"amount"`
@@ -236,7 +237,7 @@ func (l *Loan) ComputeLoanApplication(baseAmount float64) (computed ComputedLoan
 	if err != nil {
 		return
 	}
-	availableCredit := customer.AvailableCredit.Float64
+	availableCredit := customer.AvailableCredit.ValueOrZero()
 
 	// Check if requested loan amount is a valid amount
 	if baseAmount > availableCredit {
@@ -288,6 +289,159 @@ func (l *Loan) ComputeLoanApplication(baseAmount float64) (computed ComputedLoan
 	computed.DueDate = dueDate.Format("2006-01-02 15:04:05")
 	computed.DueDateFormatted = dueDate.Format("01-02-2006 03:04 PM")
 	computed.TotalAmount = computed.Amount + computed.Fee + computed.Interest
+
+	return
+}
+
+// ProcessLoanApplication processes a loan application
+func (l *Loan) ProcessLoanApplication(baseAmount float64) (err error) {
+	// Get detailed customer information
+	customer, err := l.cs.Info().GetDetails()
+	if err != nil {
+		return
+	}
+	availableCredit := customer.AvailableCredit.ValueOrZero()
+
+	// Check if requested loan amount is a valid amount
+	if baseAmount > availableCredit {
+		err = ErrNotEnoughAvailableCredit
+		return
+	}
+
+	// Check if loan approval is automatic or manual
+	loanApproval, err := l.cs.Settings().Get(2)
+	if err != nil {
+		return
+	}
+
+	// Generate reference code
+	refCode := loanApproval.Code.String + "-" + generateRandomKey(5)
+
+	// Calculate loan application
+	computed, err := l.ComputeLoanApplication(baseAmount)
+	if err != nil {
+		return
+	}
+
+	// Determine loan date
+	t := time.Now().UTC()
+
+	customerLoanApplication := models.CustomerLoanApplication{
+		CustomerID:     null.IntFrom(int64(customer.ID)),
+		LoanAmount:     null.FloatFrom(baseAmount),
+		InterestAmount: null.FloatFrom(computed.Interest),
+		FeeAmount:      null.FloatFrom(computed.Fee),
+		TotalAmount:    null.FloatFrom(computed.TotalAmount),
+		ReferenceCode:  null.StringFrom(refCode),
+		DueDate:        null.StringFrom(computed.DueDate),
+		LoanDate:       null.StringFrom(t.Format("2006-01-02 15:04:05")),
+		CreatedBy:      null.StringFrom("SYSTEM"),
+		CreatedDate:    null.StringFrom(t.Format("2006-01-02 15:04:05")),
+	}
+
+	// Determine application status and notification
+	customerLoanApplication.Status = null.StringFrom("PENDING")
+	systemSettingID := 7
+
+	if loanApproval.Value.String == "1" {
+		customerLoanApplication.Status = null.StringFrom("APPROVED")
+		customerLoanApplication.ProcessedBy = null.StringFrom("SYSTEM")
+		customerLoanApplication.ProcessedDate = null.StringFrom(t.Format("2006-01-02 15:04:05"))
+		systemSettingID = 6
+
+		es := new(EPOINT.EpointService)
+		es, err = EPOINT.New()
+		if err != nil {
+			return
+		}
+
+		_, err = es.GetLogin()
+		if err != nil {
+			err = ErrEpointInvalidUserPassword
+			return
+		}
+
+		fundTransferRequest := EPOINT.FundTransferRequest{
+			Amount:          baseAmount,
+			ClientReference: customerLoanApplication.ReferenceCode.String,
+			Source:          "P",
+			Destination:     strconv.FormatInt(customer.ProgramCustomerID.Int64, 10),
+			Description:     "Loan_approved_via_MLOC",
+			MobileNumber:    customer.MobileNumber.String,
+		}
+		ft := EPOINT.FundTransferResponse{}
+		ft, err = es.GetFundTransfer(fundTransferRequest)
+		if err != nil {
+			err = ErrEpointFailedTransfer
+			return
+		}
+
+		customerLoanApplication.EpointTransactionID = null.StringFrom(ft.TransactionID)
+	}
+
+	tx, err := DB.Begin()
+	if err != nil {
+		return
+	}
+
+	// Store results
+	err = DB.Model(&customerLoanApplication).Insert()
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return
+	}
+
+	// Get appropriate notification details
+	notification, err := l.cs.Settings().Get(systemSettingID)
+	if err != nil {
+		return
+	}
+
+	// Initialize notifications service
+	sn := Notifications.New()
+	if err != nil {
+		return
+	}
+
+	// Prepare template token replacer
+	r := strings.NewReplacer(
+		"{amount}", strconv.FormatFloat(baseAmount, 'f', -1, 64),
+		"{firstname}", customer.FirstName.String,
+	)
+
+	// Prepare sms notification
+	smsPayload := SMS.New()
+	smsPayload.To = customer.MobileNumber.String
+	smsPayload.Body = r.Replace(notification.SMSMessage.String)
+
+	// Send sms notification
+	go func() {
+		err := sn.Send(smsPayload)
+		if err != nil {
+			log.Error(err)
+		}
+	}()
+
+	// Prepare email notification
+	emailPayload := Mail.New()
+	emailPayload.To = append(emailPayload.To, Mail.Address{
+		Address: customer.Email.String,
+	})
+	emailPayload.Subject = notification.Subject.String
+	emailPayload.Body = r.Replace(notification.EmailMessage.String)
+
+	// Send email notification
+	go func() {
+		err := sn.Send(emailPayload)
+		if err != nil {
+			log.Error(err)
+		}
+	}()
 
 	return
 }

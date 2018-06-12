@@ -30,9 +30,18 @@ var (
 	// ErrNotEnoughAvailableCredit is given when loan amount is larger than the available credit
 	ErrNotEnoughAvailableCredit = errors.New("You dont have enough available credit")
 
+	// ErrProcessLoanApplication is given when a loan application fails to process
+	ErrProcessLoanApplication = errors.New("Error while processing loan application")
+
 	// ErrCustomerIncompleteInfo is given if customerinformation is not complete
 	ErrCustomerIncompleteInfo = errors.New("Please provide complete customer information")
 
 	// ErrProblemOccured is given if it can't get data from database or can't covert input to string
 	ErrProblemOccured = errors.New("Some problems occurred, please try again")
+
+	// ErrInvalidUserPassword is given if it username or password is wrong
+	ErrEpointInvalidUserPassword = errors.New("Invalid EPOINT username or password")
+
+	// ErrTransferAmount  is given if loan amount cant transfer in epoint wallet
+	ErrEpointFailedTransfer = errors.New("Cannot transfer amount in EPOINT. Please contact EPOINT administrator.")
 )

@@ -8,5 +8,8 @@ var (
 	MsgCustomerAcceptedAgreement = "Customer agreed to terms and conditions"
 
 	// MsgCustomerAddedCreditLine is given when the customer adds a credit line
-	MsgCustomerAddedCreditLine = "Customer successfully added a credit line."
+	MsgCustomerAddedCreditLine = "Customer successfully added a credit line"
+
+	// MsgCustomerAppliedForLoan is given when a customer successfully completes a loan application
+	MsgCustomerAppliedForLoan = "Customer successfully applied for a loan"
 )
