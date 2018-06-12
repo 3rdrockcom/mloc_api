@@ -175,7 +175,7 @@ func (e *EpointService) GetFundTransfer(req FundTransferRequest) (res FundTransf
 
 // CustomerBalanceRequest contains request information about a customer's balance
 type CustomerBalanceRequest struct {
-	CustomerID   int64
+	CustomerID   int
 	MobileNumber string
 }
 
@@ -195,7 +195,7 @@ func (e *EpointService) GetCustomerBalance(req CustomerBalanceRequest) (res Cust
 	// Make request
 	resp, err := httpclient.Get(u.String(), map[string]string{
 		"P01": e.sessionID,
-		"P02": strconv.FormatInt(req.CustomerID, 10),
+		"P02": strconv.FormatInt(int64(req.CustomerID), 10),
 		"P03": req.MobileNumber,
 	})
 	if err != nil {

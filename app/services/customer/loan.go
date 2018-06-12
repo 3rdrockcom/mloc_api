@@ -349,18 +349,21 @@ func (l *Loan) ProcessLoanApplication(baseAmount float64) (err error) {
 		customerLoanApplication.ProcessedDate = null.StringFrom(t.Format("2006-01-02 15:04:05"))
 		systemSettingID = 6
 
+		// Initialze epoint service
 		es := new(EPOINT.EpointService)
 		es, err = EPOINT.New()
 		if err != nil {
 			return
 		}
 
+		// Login to epoint service
 		_, err = es.GetLogin()
 		if err != nil {
 			err = ErrEpointInvalidUserPassword
 			return
 		}
 
+		// Transfer funds from prefund to customer wallet using epoint service
 		fundTransferRequest := EPOINT.FundTransferRequest{
 			Amount:          baseAmount,
 			ClientReference: customerLoanApplication.ReferenceCode.String,
@@ -446,6 +449,242 @@ func (l *Loan) ProcessLoanApplication(baseAmount float64) (err error) {
 	return
 }
 
+// ProcessLoanPayment processes a loan payment
+func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
+	// Get detailed customer information
+	customer, err := l.cs.Info().GetDetails()
+	if err != nil {
+		return
+	}
+
+	// Initialze epoint service
+	es := new(EPOINT.EpointService)
+	es, err = EPOINT.New()
+	if err != nil {
+		return
+	}
+
+	// Login to epoint service
+	_, err = es.GetLogin()
+	if err != nil {
+		err = ErrEpointInvalidUserPassword
+		return
+	}
+
+	// Get customer balance information
+	customerBalanceRequest := EPOINT.CustomerBalanceRequest{
+		CustomerID:   int(customer.ProgramCustomerID.Int64),
+		MobileNumber: customer.MobileNumber.String,
+	}
+	cb := EPOINT.CustomerBalanceResponse{}
+	cb, err = es.GetCustomerBalance(customerBalanceRequest)
+	if err != nil {
+		err = ErrEpointUnableToAccessBalance
+		return
+	}
+
+	// Check if there is enough funds available in wallet for payment
+	if paymentAmount > cb.AvailableBalance {
+		err = ErrEpointInsufficientFunds
+		return
+	}
+
+	// Generate reference code
+	refCode := "PL" + "-" + generateRandomKey(5)
+
+	// Determine payment date
+	t := time.Now().UTC()
+
+	// Transfer funds from customer wallet to settlement using epoint service
+	fundTransferRequest := EPOINT.FundTransferRequest{
+		Amount:          paymentAmount,
+		ClientReference: refCode,
+		Source:          "S",
+		Destination:     strconv.FormatInt(customer.ProgramCustomerID.Int64, 10),
+		Description:     "Loan_payment_via_MLOC",
+		MobileNumber:    customer.MobileNumber.String,
+	}
+	ft := EPOINT.FundTransferResponse{}
+	ft, err = es.GetFundTransfer(fundTransferRequest)
+	if err != nil {
+		err = ErrEpointFailedTransfer
+		return
+	}
+
+	tx, err := DB.Begin()
+	if err != nil {
+		return
+	}
+
+	// Prepare loan payment information
+	customerPayment := models.CustomerPayment{
+		CustomerID:          null.IntFrom(int64(customer.ID)),
+		ReferenceCode:       null.StringFrom(refCode),
+		PaymentAmount:       null.FloatFrom(paymentAmount),
+		DatePaid:            null.StringFrom(t.Format("2006-01-02 15:04:05")),
+		PaidBy:              null.StringFrom(strconv.FormatInt(int64(customer.ID), 10)),
+		EpointTransactionID: null.StringFrom(ft.TransactionID),
+	}
+	err = tx.Model(&customerPayment).Insert()
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+
+	// Get list of unpaid (active) customer loans
+	loanList, err := l.GetCustomerLoanList()
+	if err != nil {
+		return
+	}
+
+	// Set payment amount left to distribute among loans
+	paymentAmountBalance := paymentAmount
+	for _, loanEntry := range loanList {
+		if paymentAmount <= 0.0 {
+			continue
+		}
+		isPaid := 0
+		loanTotalPaidAmount := loanEntry.TotalPaidAmount.ValueOrZero()
+
+		loanPrincipalAmount := loanEntry.LoanAmount.ValueOrZero()
+		loanPrincipalAmountPaid := loanEntry.TotalPaidPrincipal.ValueOrZero()
+		loanPrincipalAmountUnpaid := loanPrincipalAmount - loanPrincipalAmountPaid
+		paymentPrincipalApplied := 0.0
+
+		loanFeeAmount := loanEntry.FeeAmount.ValueOrZero()
+		loanFeeAmountPaid := loanEntry.TotalPaidFee.ValueOrZero()
+		loanFeeAmountUnpaid := loanFeeAmount - loanFeeAmountPaid
+		paymentFeeApplied := 0.0
+
+		// Use available payment balance to pay loan fee
+		if loanFeeAmountUnpaid > 0.0 {
+			// Pay loan fee with payment balance
+			if paymentAmountBalance >= loanFeeAmountUnpaid {
+				// Pay loan fee entirely
+				paymentFeeApplied = loanFeeAmountUnpaid
+				paymentAmountBalance -= paymentFeeApplied
+			} else {
+				// Pay loan fee with remaining payment balance
+				paymentFeeApplied = paymentAmountBalance
+				paymentAmountBalance = 0
+			}
+		}
+
+		// Use available payment balance to pay loan principal
+		if loanPrincipalAmountUnpaid > 0.0 {
+			// Pay loan principal with payment balance
+			if paymentAmountBalance >= loanPrincipalAmountUnpaid {
+				// Pay loan principal entirely
+				paymentPrincipalApplied = loanPrincipalAmountUnpaid
+				paymentAmountBalance -= paymentPrincipalApplied
+			} else {
+				// Pay loan principal with remaining payment balance
+				paymentPrincipalApplied = paymentAmountBalance
+				paymentAmountBalance = 0
+			}
+		}
+
+		// Check if loan has been paid off
+		totalPaidFee := loanFeeAmountPaid + paymentFeeApplied
+		totalPaidPrincipal := loanPrincipalAmountPaid + paymentPrincipalApplied
+		if totalPaidPrincipal == loanPrincipalAmount && totalPaidFee == loanFeeAmount {
+			isPaid = 1
+		}
+
+		// Update customer loan information
+		customerLoan := models.CustomerLoan{
+			ID:                 loanEntry.ID,
+			TotalPaidPrincipal: null.FloatFrom(totalPaidPrincipal),
+			TotalPaidFee:       null.FloatFrom(totalPaidFee),
+			IsPaid:             null.IntFrom(int64(isPaid)),
+			TotalPaidAmount:    null.FloatFrom(loanTotalPaidAmount + paymentPrincipalApplied + paymentFeeApplied),
+		}
+		err = tx.Model(&customerLoan).Update(
+			"TotalPaidPrincipal",
+			"TotalPaidFee",
+			"IsPaid",
+			"TotalPaidAmount",
+		)
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+
+		// Insert settlement information
+		customerSettlement := models.CustomerSettlement{
+			CustomerID:        null.IntFrom(int64(customer.ID)),
+			CustomerLoanID:    null.IntFrom(int64(loanEntry.ID)),
+			CustomerPaymentID: null.IntFrom(int64(customerPayment.ID)),
+			SettlementAmount:  null.FloatFrom(paymentPrincipalApplied + paymentFeeApplied),
+			PrincipalAmount:   null.FloatFrom(paymentPrincipalApplied),
+			FeeAmount:         null.FloatFrom(paymentFeeApplied),
+			CreatedDate:       null.StringFrom(t.Format("2006-01-02 15:04:05")),
+		}
+		err = tx.Model(&customerSettlement).Insert()
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return
+	}
+
+	//
+
+	// Get appropriate notification details
+	systemSettingID := 9
+	notification, err := l.cs.Settings().Get(systemSettingID)
+	if err != nil {
+		return
+	}
+
+	// Initialize notifications service
+	sn := Notifications.New()
+	if err != nil {
+		return
+	}
+
+	// Prepare template token replacer
+	r := strings.NewReplacer(
+		"{amount}", strconv.FormatFloat(paymentAmount, 'f', -1, 64),
+		"{firstname}", customer.FirstName.String,
+	)
+
+	// Prepare sms notification
+	smsPayload := SMS.New()
+	smsPayload.To = customer.MobileNumber.String
+	smsPayload.Body = r.Replace(notification.SMSMessage.String)
+
+	// Send sms notification
+	go func() {
+		err := sn.Send(smsPayload)
+		if err != nil {
+			log.Error(err)
+		}
+	}()
+
+	// Prepare email notification
+	emailPayload := Mail.New()
+	emailPayload.To = append(emailPayload.To, Mail.Address{
+		Address: customer.Email.String,
+	})
+	emailPayload.Subject = notification.Subject.String
+	emailPayload.Body = r.Replace(notification.EmailMessage.String)
+
+	// Send email notification
+	go func() {
+		err := sn.Send(emailPayload)
+		if err != nil {
+			log.Error(err)
+		}
+	}()
+
+	return
+}
+
 // GetLoanCreditLimit gets the  loan credit limit for customer
 func (l *Loan) GetLoanCreditLimit(id int) (loanCreditLimit models.LoanCreditLimit, err error) {
 	q := DB.Select().
@@ -492,6 +731,23 @@ func (l *Loan) GetInterest() (interest models.Interest, err error) {
 		if err == sql.ErrNoRows {
 			err = ErrLoanInterestNotFound
 		}
+		return
+	}
+
+	return
+}
+
+// GetCustomerLoanList gets list of unpaid (active) customer loans
+func (l *Loan) GetCustomerLoanList() (customerLoans models.CustomerLoans, err error) {
+	err = DB.Select().
+		From(models.CustomerLoan{}.TableName()).
+		Where(dbx.HashExp{
+			"fk_customer_id": l.cs.CustomerID,
+			"is_paid":        0,
+		}).
+		OrderBy("id").
+		All(&customerLoans)
+	if err != nil {
 		return
 	}
 

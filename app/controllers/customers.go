@@ -483,3 +483,51 @@ func (co *Controllers) PostLoanApplication(c echo.Context) error {
 	msg := Customer.MsgCustomerAppliedForLoan
 	return SendOKResponse(c, msg)
 }
+
+// PostPayLoanRequest contains information about a loan payment
+type PostPayLoanRequest struct {
+	LoanAmount float64 `form:"R2"`
+}
+
+// Validate checks postform required is validation
+func (plr PostPayLoanRequest) Validate() error {
+	return validation.ValidateStruct(&plr,
+		validation.Field(&plr.LoanAmount, validation.Required, validation.Min(0.00)),
+	)
+}
+
+// PostPayLoan processes a loan payment
+func (co *Controllers) PostPayLoan(c echo.Context) error {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	plr := PostPayLoanRequest{}
+
+	// Bind data to struct
+	if err = c.Bind(&plr); err != nil {
+		err = Customer.ErrInvalidLoanAmount
+		return err
+	}
+
+	// Validate struct
+	if err = plr.Validate(); err != nil {
+		err = Customer.ErrInvalidLoanAmount
+		return err
+	}
+
+	// Calculate loan payment
+	err = sc.Loan().ProcessLoanPayment(plr.LoanAmount)
+	if err != nil {
+		return err
+	}
+
+	// Send response
+	msg := Customer.MsgCustomerAppliedForLoan
+	return SendOKResponse(c, msg)
+}

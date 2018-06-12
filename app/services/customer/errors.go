@@ -39,9 +39,15 @@ var (
 	// ErrProblemOccured is given if it can't get data from database or can't covert input to string
 	ErrProblemOccured = errors.New("Some problems occurred, please try again")
 
-	// ErrInvalidUserPassword is given if it username or password is wrong
+	// ErrEpointInvalidUserPassword is given if it username or password is wrong
 	ErrEpointInvalidUserPassword = errors.New("Invalid EPOINT username or password")
 
-	// ErrTransferAmount  is given if loan amount cant transfer in epoint wallet
+	// ErrEpointUnableToAccessBalance is given when the system is unable to obtain the customer's balance
+	ErrEpointUnableToAccessBalance = errors.New("Cannot retrieve customer balance")
+
+	// ErrEpointInsufficientFunds is given when the customer does not have enought funds in their wallet
+	ErrEpointInsufficientFunds = errors.New("You dont have enough available funds in your wallet")
+
+	// ErrEpointFailedTransfer is given if loan amount cant transfer in epoint wallet
 	ErrEpointFailedTransfer = errors.New("Cannot transfer amount in EPOINT. Please contact EPOINT administrator.")
 )
