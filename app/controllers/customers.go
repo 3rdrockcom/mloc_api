@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/epointpayment/mloc_api_go/app/models"
 	Customer "github.com/epointpayment/mloc_api_go/app/services/customer"
@@ -287,7 +288,7 @@ func (co *Controllers) GetTransactionHistory(c echo.Context) error {
 
 	// Get transaction history
 	transactionHistory := models.TransactionsHistory{}
-	switch transactionType {
+	switch strings.ToUpper(transactionType) {
 	case "LOAN":
 		fallthrough
 	case "PAYMENT":
