@@ -476,8 +476,7 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 		CustomerID:   int(customer.ProgramCustomerID.Int64),
 		MobileNumber: customer.MobileNumber.String,
 	}
-	cb := EPOINT.CustomerBalanceResponse{}
-	cb, err = es.GetCustomerBalance(customerBalanceRequest)
+	cb, err := es.GetCustomerBalance(customerBalanceRequest)
 	if err != nil {
 		err = ErrUnableToAccessBalance
 		return
@@ -540,7 +539,7 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 	// Set payment amount left to distribute among loans
 	paymentAmountBalance := paymentAmount
 	for _, loanEntry := range loanList {
-		if paymentAmount <= 0.0 {
+		if paymentAmountBalance <= 0.0 {
 			continue
 		}
 		isPaid := 0
