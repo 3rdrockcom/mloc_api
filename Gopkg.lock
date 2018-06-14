@@ -20,6 +20,12 @@
   version = "v3.2.0"
 
 [[projects]]
+  name = "github.com/go-mail/mail"
+  packages = ["."]
+  revision = "63235f23494bf20d713a585bce40b2a0675c2f77"
+  version = "2.2.0"
+
+[[projects]]
   name = "github.com/go-ozzo/ozzo-dbx"
   packages = ["."]
   revision = "db799223c01330f8dccaa852487bc2c14b736040"
@@ -148,12 +154,6 @@
   revision = "2caba252f4dc53eaf6b553000885530023f54623"
 
 [[projects]]
-  name = "gopkg.in/gomail.v2"
-  packages = ["."]
-  revision = "41f3572897373c5538c50a2402db15db079fa4fd"
-  version = "2.0.0"
-
-[[projects]]
   name = "gopkg.in/guregu/null.v3"
   packages = [
     ".",
@@ -165,6 +165,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7af40262e6f0d83c2541b94c7b6c6b83e20b9685cafab3c443de16dabd830d69"
+  inputs-digest = "4a84d79ac21e6aa8610616415ac205f981e377756a1e32a9ec99f9a6c32f626d"
   solver-name = "gps-cdcl"
   solver-version = 1

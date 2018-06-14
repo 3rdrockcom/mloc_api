@@ -3,7 +3,7 @@ package notifications
 import (
 	"github.com/epointpayment/mloc_api_go/app/config"
 
-	gomail "gopkg.in/gomail.v2"
+	gomail "github.com/go-mail/mail"
 )
 
 // cfg caches the config
