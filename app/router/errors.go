@@ -40,6 +40,26 @@ func (r *Router) appendErrorHandler() {
 			code = http.StatusBadRequest
 		case Customer.ErrProblemOccured.Error():
 			code = http.StatusBadRequest
+		case Customer.ErrLoanCreditLimitNotFound.Error():
+			code = http.StatusBadRequest
+		case Customer.ErrLoanInterestNotFound.Error():
+			code = http.StatusBadRequest
+		case Customer.ErrLoanFeeNotFound.Error():
+			code = http.StatusBadRequest
+		case Customer.ErrProcessLoanApplication.Error():
+			code = http.StatusBadRequest
+		case Customer.ErrProcessLoanPayment.Error():
+			code = http.StatusBadRequest
+
+		// Issuer / Epoint Service
+		case Customer.ErrInvalidUserPassword.Error():
+			code = http.StatusBadRequest
+		case Customer.ErrUnableToAccessBalance.Error():
+			code = http.StatusBadRequest
+		case Customer.ErrInsufficientFunds.Error():
+			code = http.StatusBadRequest
+		case Customer.ErrFailedTransfer.Error():
+			code = http.StatusBadRequest
 
 		// Lookup Service
 		case Lookup.ErrInvalidCountryID.Error():

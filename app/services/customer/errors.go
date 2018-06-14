@@ -33,21 +33,24 @@ var (
 	// ErrProcessLoanApplication is given when a loan application fails to process
 	ErrProcessLoanApplication = errors.New("Error while processing loan application")
 
+	// ErrProcessLoanPayment is given when a loan payment fails to process
+	ErrProcessLoanPayment = errors.New("Error while processing loan payment")
+
+	// ErrInvalidUserPassword is given if it username or password is wrong
+	ErrInvalidUserPassword = errors.New("Invalid username or password")
+
+	// ErrUnableToAccessBalance is given when the system is unable to obtain the customer's balance
+	ErrUnableToAccessBalance = errors.New("Cannot retrieve customer balance")
+
+	// ErrInsufficientFunds is given when the customer does not have enought funds in their wallet
+	ErrInsufficientFunds = errors.New("You dont have enough available funds in your wallet")
+
+	// ErrFailedTransfer is given if an amount cannot transfer to/from wallet
+	ErrFailedTransfer = errors.New("Cannot transfer amount: Please contact administrator")
+
 	// ErrCustomerIncompleteInfo is given if customerinformation is not complete
 	ErrCustomerIncompleteInfo = errors.New("Please provide complete customer information")
 
 	// ErrProblemOccured is given if it can't get data from database or can't covert input to string
 	ErrProblemOccured = errors.New("Some problems occurred, please try again")
-
-	// ErrEpointInvalidUserPassword is given if it username or password is wrong
-	ErrEpointInvalidUserPassword = errors.New("Invalid EPOINT username or password")
-
-	// ErrEpointUnableToAccessBalance is given when the system is unable to obtain the customer's balance
-	ErrEpointUnableToAccessBalance = errors.New("Cannot retrieve customer balance")
-
-	// ErrEpointInsufficientFunds is given when the customer does not have enought funds in their wallet
-	ErrEpointInsufficientFunds = errors.New("You dont have enough available funds in your wallet")
-
-	// ErrEpointFailedTransfer is given if loan amount cant transfer in epoint wallet
-	ErrEpointFailedTransfer = errors.New("Cannot transfer amount in EPOINT. Please contact EPOINT administrator.")
 )
