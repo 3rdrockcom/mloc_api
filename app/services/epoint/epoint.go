@@ -45,18 +45,28 @@ func New() (e *EpointService, err error) {
 
 // Response contains information given by the service
 type Response struct {
-	Code    string      `json:"ResponseCode"`
-	Message interface{} `json:"ResponseMessage"`
+	Code    string          `json:"ResponseCode"`
+	Message json.RawMessage `json:"ResponseMessage"`
 }
 
-// LoginResponse contains login information
-type LoginResponse struct {
-	SessionID              string
-	SessionValidityMinutes float64
+// SuccessResponseMessage contains success information
+type SuccessResponseMessage struct {
+	Message string `json:"message"`
+}
+
+// ErrorResponseMessage contains error information
+type ErrorResponseMessage struct {
+	Message string `json:"message"`
+}
+
+// LoginResponseMessage contains login information
+type LoginResponseMessage struct {
+	SessionID              string  `json:"session_id"`
+	SessionValidityMinutes float64 `json:"session_validity_minutes"`
 }
 
 // GetLogin creates a new session
-func (e *EpointService) GetLogin() (res LoginResponse, err error) {
+func (e *EpointService) GetLogin() (res LoginResponseMessage, err error) {
 	// Generate a valid url
 	u, err := e.generateURL(resourceMerchant, endpointMerchantLogin)
 	if err != nil {
@@ -82,25 +92,29 @@ func (e *EpointService) GetLogin() (res LoginResponse, err error) {
 
 	// Parse response
 	r := new(Response)
-	err = json.Unmarshal(bodyBytes, r)
-	if err != nil {
+	if err = json.Unmarshal(bodyBytes, r); err != nil {
 		return
 	}
 
 	// Determine results
-	if msg, ok := r.Message.(map[string]interface{}); ok {
-		switch r.Code {
-		case "0000":
-			res.SessionID = msg["session_id"].(string)
-			res.SessionValidityMinutes = msg["session_validity_minutes"].(float64)
-
-			e.sessionID = res.SessionID
-			return
+	switch r.Code {
+	case "0000":
+		if err := json.Unmarshal(r.Message, &res); err != nil {
+			return res, err
 		}
-		err = errors.New(msg["message"].(string))
+
+		e.sessionID = res.SessionID
+		return res, err
+	}
+
+	// Handle error
+	msg := new(ErrorResponseMessage)
+	if err = json.Unmarshal(r.Message, msg); err != nil {
 		return
 	}
 
+	// Send error
+	err = errors.New(msg.Message)
 	return
 }
 
@@ -112,6 +126,13 @@ type FundTransferRequest struct {
 	Destination     string
 	Description     string
 	MobileNumber    string
+}
+
+// FundTransferResponseMessage contains information about a fund transfer
+type FundTransferResponseMessage struct {
+	ClientReference string          `json:"client_reference_number"`
+	TransactionID   json.RawMessage `json:"epoint_transaction_id"`
+	Amount          json.Number     `json:"amount"`
 }
 
 // FundTransferResponse contains information about a fund transfer
@@ -152,24 +173,32 @@ func (e *EpointService) GetFundTransfer(req FundTransferRequest) (res FundTransf
 
 	// Parse response
 	r := new(Response)
-	err = json.Unmarshal(bodyBytes, r)
-	if err != nil {
+	if err = json.Unmarshal(bodyBytes, r); err != nil {
 		return
 	}
 
 	// Determine results
-	if msg, ok := r.Message.(map[string]interface{}); ok {
-		switch r.Code {
-		case "0000":
-			res.ClientReference = msg["client_reference_number"].(string)
-			res.TransactionID = msg["epoint_transaction_id"].(string)
-			res.Amount = msg["amount"].(float64)
+	switch r.Code {
+	case "0000":
+		msg := new(FundTransferResponseMessage)
+		if err = json.Unmarshal(r.Message, msg); err != nil {
 			return
 		}
-		err = errors.New(msg["message"].(string))
+
+		res.ClientReference = msg.ClientReference
+		res.TransactionID = string(msg.TransactionID)
+		res.Amount, err = msg.Amount.Float64()
 		return
 	}
 
+	// Handle error
+	msg := new(ErrorResponseMessage)
+	if err = json.Unmarshal(r.Message, msg); err != nil {
+		return
+	}
+
+	// Send error
+	err = errors.New(msg.Message)
 	return
 }
 
@@ -179,13 +208,13 @@ type CustomerBalanceRequest struct {
 	MobileNumber string
 }
 
-// CustomerBalanceResponse contains information about a customer's balance
-type CustomerBalanceResponse struct {
-	AvailableBalance float64
+// CustomerBalanceResponseMessage  contains information about a customer's balance
+type CustomerBalanceResponseMessage struct {
+	AvailableBalance float64 `json:"available_balance"`
 }
 
 // GetCustomerBalance obtains a customer's available balance
-func (e *EpointService) GetCustomerBalance(req CustomerBalanceRequest) (res CustomerBalanceResponse, err error) {
+func (e *EpointService) GetCustomerBalance(req CustomerBalanceRequest) (res CustomerBalanceResponseMessage, err error) {
 	// Generate a valid url
 	u, err := e.generateURL(resourceMerchant, endpointMerchantCustomerBalance)
 	if err != nil {
@@ -211,27 +240,32 @@ func (e *EpointService) GetCustomerBalance(req CustomerBalanceRequest) (res Cust
 
 	// Parse response
 	r := new(Response)
-	err = json.Unmarshal(bodyBytes, r)
-	if err != nil {
+	if err = json.Unmarshal(bodyBytes, r); err != nil {
 		return
 	}
 
 	// Determine results
-	if msg, ok := r.Message.(map[string]interface{}); ok {
-		switch r.Code {
-		case "0000":
-			res.AvailableBalance = msg["available_balance"].(float64)
+	switch r.Code {
+	case "0000":
+		if err = json.Unmarshal(r.Message, &res); err != nil {
 			return
 		}
-		err = errors.New(msg["message"].(string))
 		return
 	}
 
+	// Handle error
+	msg := new(ErrorResponseMessage)
+	if err = json.Unmarshal(r.Message, msg); err != nil {
+		return
+	}
+
+	// Send error
+	err = errors.New(msg.Message)
 	return
 }
 
 // GetLogout logs out a session
-func (e *EpointService) GetLogout() (err error) {
+func (e *EpointService) GetLogout() (res SuccessResponseMessage, err error) {
 	// Generate a valid url
 	u, err := e.generateURL(resourceMerchant, endpointMerchantLogout)
 	if err != nil {
@@ -255,21 +289,27 @@ func (e *EpointService) GetLogout() (err error) {
 
 	// Parse response
 	r := new(Response)
-	err = json.Unmarshal(bodyBytes, r)
-	if err != nil {
+	if err = json.Unmarshal(bodyBytes, r); err != nil {
 		return
 	}
 
 	// Determine results
-	if msg, ok := r.Message.(map[string]interface{}); ok {
-		switch r.Code {
-		case "0000":
+	switch r.Code {
+	case "0000":
+		if err = json.Unmarshal(r.Message, &res); err != nil {
 			return
 		}
-		err = errors.New(msg["message"].(string))
 		return
 	}
 
+	// Handle error
+	msg := new(ErrorResponseMessage)
+	if err = json.Unmarshal(r.Message, msg); err != nil {
+		return
+	}
+
+	// Send error
+	err = errors.New(msg.Message)
 	return
 }
 
