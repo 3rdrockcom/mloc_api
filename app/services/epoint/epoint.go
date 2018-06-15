@@ -150,25 +150,29 @@ func (e *EpointService) GetFundTransfer(req FundTransferRequest) (res FundTransf
 		return
 	}
 
-	// Make request
-	resp, err := httpclient.Get(u.String(), map[string]string{
-		"P01": e.sessionID,
-		"P02": strconv.FormatFloat(req.Amount, 'f', -1, 64),
-		"P03": req.ClientReference, // must unique
-		"P04": req.Source,          // P,S,F, or customer ID
-		"P05": req.Destination,     // P,S,F, or customer ID
-		"P06": req.Description,     // 25 chars max
-		"P07": req.MobileNumber,    // required, only if P04 is a customer_id
-	})
-	if err != nil {
-		return
-	}
+	bodyBytes := []byte(`{"ResponseCode":"0000","ResponseMessage":{"client_reference_number":"21","epoint_transaction_id":3580,"amount":"1"}}`)
+	if config.IsProd() {
+		// Make request
+		resp := new(httpclient.Response)
+		resp, err = httpclient.Get(u.String(), map[string]string{
+			"P01": e.sessionID,
+			"P02": strconv.FormatFloat(req.Amount, 'f', -1, 64),
+			"P03": req.ClientReference, // must unique
+			"P04": req.Source,          // P,S,F, or customer ID
+			"P05": req.Destination,     // P,S,F, or customer ID
+			"P06": req.Description,     // 25 chars max
+			"P07": req.MobileNumber,    // required, only if P04 is a customer_id
+		})
+		if err != nil {
+			return
+		}
 
-	// Read response
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return
+		// Read response
+		bodyBytes, err = ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return
+		}
 	}
 
 	// Parse response
