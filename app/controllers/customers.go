@@ -61,20 +61,20 @@ func (co *Controllers) GetCustomer(c echo.Context) error {
 
 // CustomerBasicRequest contains basic information of a customer
 type CustomerBasicRequest struct {
-	FirstName    string `form:"R1"`
-	MiddleName   string `form:"R2"`
-	LastName     string `form:"R3"`
-	Suffix       string `form:"R4"`
-	Birthday     string `form:"R5"`
-	Address1     string `form:"R6"`
-	Address2     string `form:"R7"`
-	Country      int64  `form:"R8"`
-	State        int64  `form:"R9"`
-	City         int64  `form:"R10"`
-	ZipCode      string `form:"R11"`
-	HomeNumber   string `form:"R12"`
-	MobileNumber string `form:"R13"`
-	Email        string `form:"R14"`
+	FirstName    string `form:"R1" json:"R1"`
+	MiddleName   string `form:"R2" json:"R2"`
+	LastName     string `form:"R3" json:"R3"`
+	Suffix       string `form:"R4" json:"R4"`
+	Birthday     string `form:"R5" json:"R5"`
+	Address1     string `form:"R6" json:"R6"`
+	Address2     string `form:"R7" json:"R7"`
+	Country      int64  `form:"R8" json:"R8"`
+	State        int64  `form:"R9" json:"R9"`
+	City         int64  `form:"R10" json:"R10"`
+	ZipCode      string `form:"R11" json:"R11"`
+	HomeNumber   string `form:"R12" json:"R12"`
+	MobileNumber string `form:"R13" json:"R13"`
+	Email        string `form:"R14" json:"R14"`
 }
 
 // Validate checks postform required is validation
@@ -184,13 +184,13 @@ func (co Controllers) PostCustomerBasic(c echo.Context) error {
 
 // CustomerAdditionalRequest contains additional information of a customer
 type CustomerAdditionalRequest struct {
-	CompanyName      string  `form:"R1"`
-	PhoneNumber      string  `form:"R2"`
-	NetPayPerCheck   float64 `form:"R3"`
-	IncomeSource     int64   `form:"R4"`
-	PayFrequency     int64   `form:"R5"`
-	NextPayDate      string  `form:"R6"`
-	FollowingPayDate string  `form:"R7"`
+	CompanyName      string  `form:"R1" json:"R1"`
+	PhoneNumber      string  `form:"R2" json:"R2"`
+	NetPayPerCheck   float64 `form:"R3" json:"R3"`
+	IncomeSource     int64   `form:"R4" json:"R4"`
+	PayFrequency     int64   `form:"R5" json:"R5"`
+	NextPayDate      string  `form:"R6" json:"R6"`
+	FollowingPayDate string  `form:"R7" json:"R7"`
 }
 
 // Validate checks postform required is validation
@@ -409,7 +409,7 @@ func (co *Controllers) PostCreditLineApplication(c echo.Context) error {
 
 // PostComputeLoanRequest contains information for computing a loan application
 type PostComputeLoanRequest struct {
-	LoanAmount float64 `form:"R2"`
+	LoanAmount float64 `form:"R2" json:"R2"`
 }
 
 // Validate checks postform required is validation
@@ -456,7 +456,7 @@ func (co *Controllers) PostComputeLoan(c echo.Context) error {
 
 // PostLoanApplicationRequest contains information for a loan application
 type PostLoanApplicationRequest struct {
-	LoanAmount float64 `form:"R2"`
+	LoanAmount float64 `form:"R2" json:"R2"`
 }
 
 // Validate checks postform required is validation
@@ -504,7 +504,7 @@ func (co *Controllers) PostLoanApplication(c echo.Context) error {
 
 // PostPayLoanRequest contains information about a loan payment
 type PostPayLoanRequest struct {
-	LoanAmount float64 `form:"R2"`
+	LoanAmount float64 `form:"R2" json:"R2"`
 }
 
 // Validate checks postform required is validation
