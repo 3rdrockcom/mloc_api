@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/epointpayment/mloc_api_go/app/models"
 	Customer "github.com/epointpayment/mloc_api_go/app/services/customer"
@@ -37,6 +38,22 @@ func (co *Controllers) GetCustomer(c echo.Context) error {
 		fallthrough
 	default:
 		customerInfo.IsSuspended = "0"
+	}
+
+	if customerInfo.BirthDate.Valid {
+		t, err := time.Parse(time.RFC3339, customerInfo.BirthDate.String)
+		if err != nil {
+			return err
+		}
+		customerInfo.BirthDate = null.StringFrom(t.Format("2006-01-02"))
+	}
+
+	if customerInfo.NextPayDate.Valid {
+		t, err := time.Parse(time.RFC3339, customerInfo.NextPayDate.String)
+		if err != nil {
+			return err
+		}
+		customerInfo.NextPayDate = null.StringFrom(t.Format("2006-01-02"))
 	}
 
 	return SendResponse(c, http.StatusOK, customerInfo)
