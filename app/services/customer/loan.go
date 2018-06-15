@@ -68,7 +68,6 @@ func (l *Loan) GetCustomerLoanTotal() (loanTotal models.LoanTotal, err error) {
 		From(loanTotal.TableName()).
 		Where(dbx.HashExp{"fk_customer_id": l.cs.CustomerID}).
 		One(&loanTotal)
-
 	if err != nil {
 		if err == sql.ErrNoRows {
 			err = ErrLoanNotFound

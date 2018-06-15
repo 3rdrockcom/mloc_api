@@ -38,6 +38,8 @@ func (r *Router) appendErrorHandler() {
 			code = http.StatusNotFound
 		case Customer.ErrInvalidLoanAmount.Error():
 			code = http.StatusBadRequest
+		case Customer.ErrLoanNotFound.Error():
+			code = http.StatusNotFound
 		case Customer.ErrNotEnoughAvailableCredit.Error():
 			code = http.StatusBadRequest
 		case Customer.ErrCustomerIncompleteInfo.Error():
