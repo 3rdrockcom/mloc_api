@@ -102,13 +102,27 @@ func (as *APIService) GetKeyByCustomerID(customerID int) (entry *models.APIKey, 
 	return
 }
 
-// GetCustomerByCustomerUniqueID gets an API key by customer unique ID
+// GetCustomerByCustomerUniqueID gets a customer information by customer unique ID
 func (as *APIService) GetCustomerByCustomerUniqueID(customerUniqueID string) (customer *models.Customer, err error) {
 	customer = new(models.Customer)
 
 	err = DB.Select().
 		Where(dbx.HashExp{"cust_unique_id": customerUniqueID}).
 		One(customer)
+	if err != nil {
+		return nil, err
+	}
+
+	return
+}
+
+// GetCustomerInfoByCustomerUniqueID gets a detailed customer information by customer unique ID
+func (as *APIService) GetCustomerInfoByCustomerUniqueID(customerUniqueID string) (customerInfo *models.CustomerInfo, err error) {
+	customerInfo = new(models.CustomerInfo)
+
+	err = DB.Select().
+		Where(dbx.HashExp{"cust_unique_id": customerUniqueID}).
+		One(customerInfo)
 	if err != nil {
 		return nil, err
 	}

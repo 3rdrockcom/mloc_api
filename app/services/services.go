@@ -4,6 +4,7 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/database"
 	"github.com/epointpayment/mloc_api_go/app/services/api"
 	"github.com/epointpayment/mloc_api_go/app/services/customer"
+	"github.com/epointpayment/mloc_api_go/app/services/lookup"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 )
@@ -21,6 +22,7 @@ func New(DB *database.Database) error {
 	// Attach the database handler to service
 	api.DB = db
 	customer.DB = db
+	lookup.DB = db
 
 	return nil
 }

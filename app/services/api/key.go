@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/epointpayment/mloc_api_go/app/models"
+	"gopkg.in/guregu/null.v3/zero"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/labstack/gommon/random"
@@ -18,8 +19,11 @@ type Key struct {
 	programID             int
 	programCustomerID     int
 	programCustomerMobile string
-	CustomerUniqueID      string `json:"cust_unique_id"`
-	ApiKey                string `json:"api_key"`
+	CustomerUniqueID      string   `json:"cust_unique_id"`
+	ApiKey                string   `json:"api_key"`
+	MLOCAccess            zero.Int `json:"mloc_access"`
+	Registration          zero.Int `json:"registration"`
+	TermsAndConditions    zero.Int `json:"term_and_condition"`
 }
 
 // Validate checks if the values in the struct are valid
@@ -49,7 +53,7 @@ func (k *Key) GetCustomerKey() (customerKey Key, err error) {
 
 	as := New()
 
-	customer, err := as.GetCustomerByCustomerUniqueID(customerUniqueID)
+	customer, err := as.GetCustomerInfoByCustomerUniqueID(customerUniqueID)
 	if err == sql.ErrNoRows {
 		entry, err := as.GetRegistrationKey()
 		if err != nil {
@@ -69,6 +73,9 @@ func (k *Key) GetCustomerKey() (customerKey Key, err error) {
 
 	customerKey.CustomerUniqueID = k.generateCustomerUniqueID()
 	customerKey.ApiKey = entry.Key
+	customerKey.MLOCAccess = customer.MLOCAccess
+	customerKey.Registration = customer.Registration
+	customerKey.TermsAndConditions = customer.TermsAndConditions
 
 	return
 }
@@ -79,7 +86,7 @@ func (k *Key) GenerateCustomerKey() (customerKey Key, err error) {
 
 	as := New()
 
-	_, err = as.GetCustomerByCustomerUniqueID(customerUniqueID)
+	_, err = as.GetCustomerInfoByCustomerUniqueID(customerUniqueID)
 	if err != nil && err != sql.ErrNoRows {
 		return
 	}

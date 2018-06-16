@@ -15,5 +15,5 @@ type APIKey struct {
 
 // TableName gets the name of the database table
 func (a APIKey) TableName() string {
-	return "tblapikey"
+	return "tblApiKey"
 }

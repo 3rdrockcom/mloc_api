@@ -1,11 +1,21 @@
 package auth
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"io/ioutil"
+	"strings"
+
 	API "github.com/epointpayment/mloc_api_go/app/services/api"
 	Customer "github.com/epointpayment/mloc_api_go/app/services/customer"
 
 	"github.com/labstack/echo"
 )
+
+type Request struct {
+	LoanAmount float64 `form:"R2" json:"R2"`
+}
 
 func DefaultValidator(key string, customerUniqueIDFieldName string, c echo.Context) (isValid bool, err error) {
 	// Initialize API service
@@ -37,7 +47,35 @@ func DefaultValidator(key string, customerUniqueIDFieldName string, c echo.Conte
 	case "GET":
 		customerUniqueID = c.QueryParam(customerUniqueIDFieldName)
 	case "POST":
-		customerUniqueID = c.FormValue(customerUniqueIDFieldName)
+
+		switch {
+		case strings.HasPrefix(c.Request().Header.Get(echo.HeaderContentType), echo.MIMEApplicationJSON):
+			// Get request information
+			req := c.Request()
+
+			// Create a temporary buffer
+			b := bytes.NewBuffer(make([]byte, 0))
+
+			// TeeReader returns a Reader that writes to b what it reads from req.Body
+			reader := io.TeeReader(req.Body, b)
+
+			// Unmarshal json request body to map
+			payload := make(map[string]interface{})
+			if err := json.NewDecoder(reader).Decode(&payload); err != nil {
+				break
+			}
+			req.Body.Close()
+
+			// NopCloser returns a ReadCloser with a no-op Close method wrapping the provided Reader b
+			req.Body = ioutil.NopCloser(b)
+
+			// Get customer unique id from payload
+			if v, ok := payload[customerUniqueIDFieldName].(string); ok {
+				customerUniqueID = v
+			}
+		default:
+			customerUniqueID = c.FormValue(customerUniqueIDFieldName)
+		}
 	}
 
 	// Initialize customer service

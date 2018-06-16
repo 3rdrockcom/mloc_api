@@ -1,0 +1,21 @@
+settings:
+  legacy:
+    force: false
+    interval: 0s
+schema:
+- name: mloc
+  path: .
+  commands:
+    run:
+      status: true
+  args:
+  - serve
+  watcher:
+    extensions:
+    - go
+    paths:
+    - /
+    ignored_paths:
+    - .git
+    - .realize
+    - vendor

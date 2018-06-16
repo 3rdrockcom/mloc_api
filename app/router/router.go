@@ -2,8 +2,9 @@ package router
 
 import (
 	"net"
-	"os"
+	"strconv"
 
+	"github.com/epointpayment/mloc_api_go/app/config"
 	"github.com/epointpayment/mloc_api_go/app/controllers"
 
 	"github.com/labstack/echo"
@@ -19,8 +20,11 @@ type Router struct {
 func NewRouter(c *controllers.Controllers) *Router {
 	r := &Router{}
 
-	r.e = echo.New()
 	r.c = c
+
+	// Initialize router
+	r.e = echo.New()
+	r.e.HideBanner = true
 
 	r.appendMiddleware()
 	r.appendRoutes()
@@ -30,17 +34,9 @@ func NewRouter(c *controllers.Controllers) *Router {
 }
 
 func (r *Router) Run() error {
-	// Get host information
-	host := ""
-	if os.Getenv("HOST") != "" {
-		host = os.Getenv("HOST")
-	}
-
-	//Get port information
-	port := "8080"
-	if os.Getenv("PORT") != "" {
-		port = os.Getenv("PORT")
-	}
+	// Get config information
+	host := config.Get().Server.Host
+	port := strconv.FormatInt(config.Get().Server.Port, 10)
 
 	// Create an address for the router to use
 	address := net.JoinHostPort(host, port)
