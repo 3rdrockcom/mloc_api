@@ -58,13 +58,13 @@ func (r *Router) appendErrorHandler() {
 			code = http.StatusBadRequest
 
 		// Issuer / Epoint Service
-		case Customer.ErrInvalidUserPassword.Error():
+		case Customer.ErrIssuerInvalidUserPassword.Error():
 			code = http.StatusBadRequest
-		case Customer.ErrUnableToAccessBalance.Error():
+		case Customer.ErrIssuerUnableToAccessBalance.Error():
 			code = http.StatusBadRequest
-		case Customer.ErrInsufficientFunds.Error():
+		case Customer.ErrIssuerInsufficientFunds.Error():
 			code = http.StatusBadRequest
-		case Customer.ErrFailedTransfer.Error():
+		case Customer.ErrIssuerFailedTransfer.Error():
 			code = http.StatusBadRequest
 
 		// Lookup Service
