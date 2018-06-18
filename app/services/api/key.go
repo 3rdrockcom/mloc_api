@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/epointpayment/mloc_api_go/app/models"
-	"gopkg.in/guregu/null.v3/zero"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/labstack/gommon/random"
+	null "gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v3/zero"
 )
 
 // Key manages the customer API
@@ -102,10 +103,10 @@ func (k *Key) GenerateCustomerKey() (customerKey Key, err error) {
 	}
 
 	customer := &models.Customer{
-		ProgramID:             k.programID,
-		ProgramCustomerID:     k.programCustomerID,
-		ProgramCustomerMobile: k.programCustomerMobile,
-		CustomerUniqueID:      customerUniqueID,
+		ProgramID:             null.IntFrom(int64(k.programID)),
+		ProgramCustomerID:     null.IntFrom(int64(k.programCustomerID)),
+		ProgramCustomerMobile: null.StringFrom(k.programCustomerMobile),
+		CustomerUniqueID:      null.StringFrom(customerUniqueID),
 	}
 	err = tx.Model(customer).Insert()
 	if err != nil {
@@ -131,7 +132,7 @@ func (k *Key) GenerateCustomerKey() (customerKey Key, err error) {
 	}
 
 	customerKey.ApiKey = entry.Key
-	customerKey.CustomerUniqueID = customer.CustomerUniqueID
+	customerKey.CustomerUniqueID = customer.CustomerUniqueID.String
 
 	return
 }

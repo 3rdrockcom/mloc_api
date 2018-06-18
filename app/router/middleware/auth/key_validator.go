@@ -91,7 +91,7 @@ func DefaultValidator(key string, customerUniqueIDFieldName string, c echo.Conte
 	}
 
 	// Check if customer unique ID is a match
-	if customer.CustomerUniqueID != customerUniqueID {
+	if customer.CustomerUniqueID.String != customerUniqueID {
 		err = Customer.ErrInvalidUniqueCustomerID
 		return
 	}
