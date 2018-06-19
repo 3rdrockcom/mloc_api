@@ -50,6 +50,10 @@ func (i *Info) GetDetails() (customerInfo *models.CustomerInfo, err error) {
 
 // UpdateCustomerBasic updates basic customer information
 func (i *Info) UpdateCustomerBasic(customerBasic *models.CustomerBasic, fields ...string) (err error) {
+	if len(fields) == 0 {
+		return
+	}
+
 	tx, err := DB.Begin()
 	if err != nil {
 		return err
@@ -67,13 +71,40 @@ func (i *Info) UpdateCustomerBasic(customerBasic *models.CustomerBasic, fields .
 
 // UpdateCustomerAdditional updates additional customer information
 func (i *Info) UpdateCustomerAdditional(customerAdditional *models.CustomerAdditional, fields ...string) (err error) {
+	if len(fields) == 0 {
+		return
+	}
+
+	params := dbx.Params{}
+	for _, field := range fields {
+		switch field {
+		case "CompanyName":
+			params["company_name"] = customerAdditional.CompanyName
+		case "PhoneNumber":
+			params["phone_number"] = customerAdditional.PhoneNumber
+		case "NetPayPerCheck":
+			params["net_pay_percheck"] = customerAdditional.NetPayPerCheck
+		case "IncomeSource":
+			params["income_source"] = customerAdditional.IncomeSource
+		case "PayFrequency":
+			params["pay_frequency"] = customerAdditional.PayFrequency
+		case "NextPayDate":
+			params["next_paydate"] = customerAdditional.NextPayDate
+		case "FollowingPayDate":
+			params["following_paydate"] = customerAdditional.FollowingPayDate
+		}
+	}
+
 	tx, err := DB.Begin()
 	if err != nil {
 		return err
 	}
 
-	customerAdditional.ID = i.cs.CustomerID
-	err = tx.Model(customerAdditional).Update(fields...)
+	_, err = tx.Update(
+		customerAdditional.TableName(),
+		params,
+		dbx.HashExp{"fk_customer_id": i.cs.CustomerID},
+	).Execute()
 	if err != nil {
 		tx.Rollback()
 		return err
