@@ -36,17 +36,17 @@ var (
 	// ErrProcessLoanPayment is given when a loan payment fails to process
 	ErrProcessLoanPayment = errors.New("Error while processing loan payment")
 
-	// ErrInvalidUserPassword is given if it username or password is wrong
-	ErrInvalidUserPassword = errors.New("Invalid username or password")
+	// ErrIssuerInvalidUserPassword is given if it username or password is wrong
+	ErrIssuerInvalidUserPassword = errors.New("Invalid issuer username or password")
 
-	// ErrUnableToAccessBalance is given when the system is unable to obtain the customer's balance
-	ErrUnableToAccessBalance = errors.New("Cannot retrieve customer balance")
+	// ErrIssuerUnableToAccessBalance is given when the system is unable to obtain the customer's balance
+	ErrIssuerUnableToAccessBalance = errors.New("Cannot retrieve customer balance from issuer")
 
-	// ErrInsufficientFunds is given when the customer does not have enought funds in their wallet
-	ErrInsufficientFunds = errors.New("You dont have enough available funds in your wallet")
+	// ErrIssuerInsufficientFunds is given when the customer does not have enought funds in their wallet
+	ErrIssuerInsufficientFunds = errors.New("You dont have enough available funds in your wallet")
 
-	// ErrFailedTransfer is given if an amount cannot transfer to/from wallet
-	ErrFailedTransfer = errors.New("Cannot transfer amount: Please contact administrator")
+	// ErrIssuerFailedTransfer is given if an amount cannot transfer to/from wallet
+	ErrIssuerFailedTransfer = errors.New("Cannot transfer amount with issuer: Please contact administrator")
 
 	// ErrCustomerIncompleteInfo is given if customerinformation is not complete
 	ErrCustomerIncompleteInfo = errors.New("Please provide complete customer information")

@@ -358,7 +358,7 @@ func (l *Loan) ProcessLoanApplication(baseAmount float64) (err error) {
 		// Login to epoint service
 		_, err = es.GetLogin()
 		if err != nil {
-			err = ErrInvalidUserPassword
+			err = ErrIssuerInvalidUserPassword
 			return
 		}
 
@@ -374,7 +374,7 @@ func (l *Loan) ProcessLoanApplication(baseAmount float64) (err error) {
 		ft := EPOINT.FundTransferResponse{}
 		ft, err = es.GetFundTransfer(fundTransferRequest)
 		if err != nil {
-			err = ErrFailedTransfer
+			err = ErrIssuerFailedTransfer
 			return
 		}
 
@@ -466,7 +466,7 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 	// Login to epoint service
 	_, err = es.GetLogin()
 	if err != nil {
-		err = ErrInvalidUserPassword
+		err = ErrIssuerInvalidUserPassword
 		return
 	}
 
@@ -477,13 +477,13 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 	}
 	cb, err := es.GetCustomerBalance(customerBalanceRequest)
 	if err != nil {
-		err = ErrUnableToAccessBalance
+		err = ErrIssuerUnableToAccessBalance
 		return
 	}
 
 	// Check if there is enough funds available in wallet for payment
 	if paymentAmount > cb.AvailableBalance {
-		err = ErrInsufficientFunds
+		err = ErrIssuerInsufficientFunds
 		return
 	}
 
@@ -505,7 +505,7 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 	ft := EPOINT.FundTransferResponse{}
 	ft, err = es.GetFundTransfer(fundTransferRequest)
 	if err != nil {
-		err = ErrFailedTransfer
+		err = ErrIssuerFailedTransfer
 		return
 	}
 

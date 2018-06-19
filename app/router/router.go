@@ -24,6 +24,7 @@ func NewRouter(c *controllers.Controllers) *Router {
 
 	// Initialize router
 	r.e = echo.New()
+	r.e.Binder = new(CustomBinder)
 	r.e.HideBanner = true
 
 	r.appendMiddleware()

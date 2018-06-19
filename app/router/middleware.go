@@ -1,6 +1,9 @@
 package router
 
 import (
+	"log"
+
+	"github.com/epointpayment/mloc_api_go/app/config"
 	"github.com/epointpayment/mloc_api_go/app/router/middleware/auth"
 
 	"github.com/labstack/echo"
@@ -13,6 +16,13 @@ func (r *Router) appendMiddleware() {
 	r.e.Use(middleware.Gzip())
 	r.e.Use(middleware.Logger())
 	r.e.Use(middleware.Recover())
+
+	if config.IsDev() {
+		r.e.Use(middleware.BodyDump(func(c echo.Context, reqBody, resBody []byte) {
+			log.Println("Request Body:\n" + string(reqBody))
+			log.Println("Response Body:\n" + string(resBody))
+		}))
+	}
 }
 
 // mwBasicAuth handles the basic authentication for a specific route

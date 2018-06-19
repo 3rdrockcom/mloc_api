@@ -151,6 +151,9 @@ func (e *EpointService) GetFundTransfer(req FundTransferRequest) (res FundTransf
 	}
 
 	bodyBytes := []byte(`{"ResponseCode":"0000","ResponseMessage":{"client_reference_number":"21","epoint_transaction_id":3580,"amount":"1"}}`)
+
+	// bodyBytes := []byte(`{"ResponseCode":"1000","ResponseMessage":{"message":"Failed Validation.","validationMessages":{"v0":"The field UserDescription must be a string with a maximum length of 30."}}}`)
+
 	if config.IsProd() {
 		// Make request
 		resp := new(httpclient.Response)
@@ -225,21 +228,26 @@ func (e *EpointService) GetCustomerBalance(req CustomerBalanceRequest) (res Cust
 		return
 	}
 
-	// Make request
-	resp, err := httpclient.Get(u.String(), map[string]string{
-		"P01": e.sessionID,
-		"P02": strconv.FormatInt(int64(req.CustomerID), 10),
-		"P03": req.MobileNumber,
-	})
-	if err != nil {
-		return
-	}
+	bodyBytes := []byte(`{"ResponseCode":"0000","ResponseMessage":{"available_balance":95.25}}`)
 
-	// Read response
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return
+	if config.IsProd() {
+		// Make request
+		resp := new(httpclient.Response)
+		resp, err = httpclient.Get(u.String(), map[string]string{
+			"P01": e.sessionID,
+			"P02": strconv.FormatInt(int64(req.CustomerID), 10),
+			"P03": req.MobileNumber,
+		})
+		if err != nil {
+			return
+		}
+
+		// Read response
+		bodyBytes, err = ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return
+		}
 	}
 
 	// Parse response
