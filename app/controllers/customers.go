@@ -197,7 +197,7 @@ type CustomerAdditionalRequest struct {
 func (ca CustomerAdditionalRequest) Validate() error {
 	return validation.ValidateStruct(&ca,
 		validation.Field(&ca.CompanyName, validation.Required),
-		validation.Field(&ca.NetPayPerCheck, validation.Required),
+		validation.Field(&ca.NetPayPerCheck, validation.Required, validation.Min(0.00)),
 		validation.Field(&ca.IncomeSource, validation.Required),
 		validation.Field(&ca.PayFrequency, validation.Required),
 		validation.Field(&ca.NextPayDate, validation.Date("2006-01-02")),
