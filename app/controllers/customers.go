@@ -61,20 +61,20 @@ func (co *Controllers) GetCustomer(c echo.Context) error {
 
 // CustomerBasicRequest contains basic information of a customer
 type CustomerBasicRequest struct {
-	FirstName    string `form:"R1" json:"R1"`
-	MiddleName   string `form:"R2" json:"R2"`
-	LastName     string `form:"R3" json:"R3"`
-	Suffix       string `form:"R4" json:"R4"`
-	Birthday     string `form:"R5" json:"R5"`
-	Address1     string `form:"R6" json:"R6"`
-	Address2     string `form:"R7" json:"R7"`
-	Country      int64  `form:"R8" json:"R8"`
-	State        int64  `form:"R9" json:"R9"`
-	City         int64  `form:"R10" json:"R10"`
-	ZipCode      string `form:"R11" json:"R11"`
-	HomeNumber   string `form:"R12" json:"R12"`
-	MobileNumber string `form:"R13" json:"R13"`
-	Email        string `form:"R14" json:"R14"`
+	FirstName    null.String `form:"R1" json:"R1"`
+	MiddleName   null.String `form:"R2" json:"R2"`
+	LastName     null.String `form:"R3" json:"R3"`
+	Suffix       null.String `form:"R4" json:"R4"`
+	Birthday     null.String `form:"R5" json:"R5"`
+	Address1     null.String `form:"R6" json:"R6"`
+	Address2     null.String `form:"R7" json:"R7"`
+	Country      null.Int    `form:"R8" json:"R8"`
+	State        null.Int    `form:"R9" json:"R9"`
+	City         null.Int    `form:"R10" json:"R10"`
+	ZipCode      null.String `form:"R11" json:"R11"`
+	HomeNumber   null.String `form:"R12" json:"R12"`
+	MobileNumber null.String `form:"R13" json:"R13"`
+	Email        null.String `form:"R14" json:"R14"`
 }
 
 // Validate checks postform required is validation
@@ -118,53 +118,53 @@ func (co Controllers) PostCustomerBasic(c echo.Context) error {
 	customerBasic.ID = customerID
 
 	fields := []string{}
-	formKeys, _ := c.FormParams() // previously called in form binding, no need to check errors
-	for formKey := range formKeys {
+	formKeys := []string{"R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12", "R13", "R14"}
+	for _, formKey := range formKeys {
 		field := ""
 
 		switch formKey {
 		case "R1":
 			field = "FirstName"
-			customerBasic.FirstName = null.StringFrom(cr.FirstName)
+			customerBasic.FirstName = cr.FirstName
 		case "R2":
 			field = "MiddleName"
-			customerBasic.MiddleName = null.StringFrom(cr.MiddleName)
+			customerBasic.MiddleName = cr.MiddleName
 		case "R3":
 			field = "LastName"
-			customerBasic.LastName = null.StringFrom(cr.LastName)
+			customerBasic.LastName = cr.LastName
 		case "R4":
 			field = "Suffix"
-			customerBasic.Suffix = null.StringFrom(cr.Suffix)
+			customerBasic.Suffix = cr.Suffix
 		case "R5":
 			field = "Birthday"
-			customerBasic.Birthday = null.StringFrom(cr.Birthday)
+			customerBasic.Birthday = cr.Birthday
 		case "R6":
 			field = "Address1"
-			customerBasic.Address1 = null.StringFrom(cr.Address1)
+			customerBasic.Address1 = cr.Address1
 		case "R7":
 			field = "Address2"
-			customerBasic.Address2 = null.StringFrom(cr.Address2)
+			customerBasic.Address2 = cr.Address2
 		case "R8":
 			field = "Country"
-			customerBasic.Country = null.IntFrom(cr.Country)
+			customerBasic.Country = cr.Country
 		case "R9":
 			field = "State"
-			customerBasic.State = null.IntFrom(cr.State)
+			customerBasic.State = cr.State
 		case "R10":
 			field = "State"
-			customerBasic.City = null.IntFrom(cr.City)
+			customerBasic.City = cr.City
 		case "R11":
 			field = "ZipCode"
-			customerBasic.ZipCode = null.StringFrom(cr.ZipCode)
+			customerBasic.ZipCode = cr.ZipCode
 		case "R12":
 			field = "HomeNumber"
-			customerBasic.HomeNumber = null.StringFrom(cr.HomeNumber)
+			customerBasic.HomeNumber = cr.HomeNumber
 		case "R13":
 			field = "MobileNumber"
-			customerBasic.MobileNumber = null.StringFrom(cr.MobileNumber)
+			customerBasic.MobileNumber = cr.MobileNumber
 		case "R14":
 			field = "Email"
-			customerBasic.Email = null.StringFrom(cr.Email)
+			customerBasic.Email = cr.Email
 		}
 
 		if field != "" {
@@ -184,13 +184,13 @@ func (co Controllers) PostCustomerBasic(c echo.Context) error {
 
 // CustomerAdditionalRequest contains additional information of a customer
 type CustomerAdditionalRequest struct {
-	CompanyName      string  `form:"R1" json:"R1"`
-	PhoneNumber      string  `form:"R2" json:"R2"`
-	NetPayPerCheck   float64 `form:"R3" json:"R3"`
-	IncomeSource     int64   `form:"R4" json:"R4"`
-	PayFrequency     int64   `form:"R5" json:"R5"`
-	NextPayDate      string  `form:"R6" json:"R6"`
-	FollowingPayDate string  `form:"R7" json:"R7"`
+	CompanyName      null.String `form:"R1" json:"R1"`
+	PhoneNumber      null.String `form:"R2" json:"R2"`
+	NetPayPerCheck   null.Float  `form:"R3" json:"R3"`
+	IncomeSource     null.Int    `form:"R4" json:"R4"`
+	PayFrequency     null.Int    `form:"R5" json:"R5"`
+	NextPayDate      null.String `form:"R6" json:"R6"`
+	FollowingPayDate null.String `form:"R7" json:"R7"`
 }
 
 // Validate checks postform required is validation
@@ -235,32 +235,32 @@ func (co Controllers) PostCustomerAdditional(c echo.Context) error {
 	customerAdditional.ID = customerID
 
 	fields := []string{}
-	formKeys, _ := c.FormParams() // previously called in form binding, no need to check errors
-	for formKey := range formKeys {
+	formKeys := []string{"R1", "R2", "R3", "R4", "R5", "R6", "R7"}
+	for _, formKey := range formKeys {
 		field := ""
 
 		switch formKey {
 		case "R1":
 			field = "CompanyName"
-			customerAdditional.CompanyName = null.StringFrom(cr.CompanyName)
+			customerAdditional.CompanyName = cr.CompanyName
 		case "R2":
 			field = "PhoneNumber"
-			customerAdditional.PhoneNumber = null.StringFrom(cr.PhoneNumber)
+			customerAdditional.PhoneNumber = cr.PhoneNumber
 		case "R3":
 			field = "NetPayPerCheck"
-			customerAdditional.NetPayPerCheck = null.FloatFrom(cr.NetPayPerCheck)
+			customerAdditional.NetPayPerCheck = cr.NetPayPerCheck
 		case "R4":
 			field = "IncomeSource"
-			customerAdditional.IncomeSource = null.IntFrom(cr.IncomeSource)
+			customerAdditional.IncomeSource = cr.IncomeSource
 		case "R5":
 			field = "PayFrequency"
-			customerAdditional.PayFrequency = null.IntFrom(cr.PayFrequency)
+			customerAdditional.PayFrequency = cr.PayFrequency
 		case "R6":
 			field = "NextPayDate"
-			customerAdditional.NextPayDate = null.StringFrom(cr.NextPayDate)
+			customerAdditional.NextPayDate = cr.NextPayDate
 		case "R7":
 			field = "FollowingPayDate"
-			customerAdditional.FollowingPayDate = null.StringFrom(cr.FollowingPayDate)
+			customerAdditional.FollowingPayDate = cr.FollowingPayDate
 		}
 
 		if field != "" {
@@ -409,7 +409,7 @@ func (co *Controllers) PostCreditLineApplication(c echo.Context) error {
 
 // PostComputeLoanRequest contains information for computing a loan application
 type PostComputeLoanRequest struct {
-	LoanAmount float64 `form:"R2" json:"R2"`
+	LoanAmount null.Float `form:"R2" json:"R2"`
 }
 
 // Validate checks postform required is validation
@@ -445,7 +445,7 @@ func (co *Controllers) PostComputeLoan(c echo.Context) error {
 	}
 
 	// Calculate loan application
-	computedLoan, err := sc.Loan().ComputeLoanApplication(clr.LoanAmount)
+	computedLoan, err := sc.Loan().ComputeLoanApplication(clr.LoanAmount.Float64)
 	if err != nil {
 		return err
 	}
@@ -456,7 +456,7 @@ func (co *Controllers) PostComputeLoan(c echo.Context) error {
 
 // PostLoanApplicationRequest contains information for a loan application
 type PostLoanApplicationRequest struct {
-	LoanAmount float64 `form:"R2" json:"R2"`
+	LoanAmount null.Float `form:"R2" json:"R2"`
 }
 
 // Validate checks postform required is validation
@@ -492,7 +492,7 @@ func (co *Controllers) PostLoanApplication(c echo.Context) error {
 	}
 
 	// Calculate loan application
-	err = sc.Loan().ProcessLoanApplication(lar.LoanAmount)
+	err = sc.Loan().ProcessLoanApplication(lar.LoanAmount.Float64)
 	if err != nil {
 		return err
 	}
@@ -504,7 +504,7 @@ func (co *Controllers) PostLoanApplication(c echo.Context) error {
 
 // PostPayLoanRequest contains information about a loan payment
 type PostPayLoanRequest struct {
-	LoanAmount float64 `form:"R2" json:"R2"`
+	LoanAmount null.Float `form:"R2" json:"R2"`
 }
 
 // Validate checks postform required is validation
@@ -540,7 +540,7 @@ func (co *Controllers) PostPayLoan(c echo.Context) error {
 	}
 
 	// Calculate loan payment
-	err = sc.Loan().ProcessLoanPayment(plr.LoanAmount)
+	err = sc.Loan().ProcessLoanPayment(plr.LoanAmount.Float64)
 	if err != nil {
 		return err
 	}
