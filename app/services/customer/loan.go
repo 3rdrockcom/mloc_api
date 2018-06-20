@@ -497,8 +497,8 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 	fundTransferRequest := EPOINT.FundTransferRequest{
 		Amount:          paymentAmount,
 		ClientReference: refCode,
-		Source:          "S",
-		Destination:     strconv.FormatInt(customer.ProgramCustomerID.Int64, 10),
+		Source:          strconv.FormatInt(customer.ProgramCustomerID.Int64, 10),
+		Destination:     "S",
 		Description:     "Loan_payment_via_MLOC",
 		MobileNumber:    customer.MobileNumber.String,
 	}
