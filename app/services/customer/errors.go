@@ -9,6 +9,12 @@ var (
 	// ErrCustomerNotFound is an error for a non-existent customer
 	ErrCustomerNotFound = errors.New("Customer not found")
 
+	// ErrInvalidNextPayDate is an error for invalid next pay date
+	ErrInvalidNextPayDate = errors.New("Invalid next pay date")
+
+	// ErrInvalidFollowingPayDate is an error for invalid next pay date
+	ErrInvalidFollowingPayDate = errors.New("Invalid following pay date")
+
 	// ErrTransactionNotFound is an error given when no transactions were found
 	ErrTransactionNotFound = errors.New("No transaction(s) were found")
 

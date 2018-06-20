@@ -56,6 +56,10 @@ func (r *Router) appendErrorHandler() {
 			code = http.StatusBadRequest
 		case Customer.ErrProcessLoanPayment.Error():
 			code = http.StatusBadRequest
+		case
+			Customer.ErrInvalidNextPayDate.Error(),
+			Customer.ErrInvalidFollowingPayDate.Error():
+			code = http.StatusBadRequest
 
 		// Issuer / Epoint Service
 		case Customer.ErrIssuerInvalidUserPassword.Error():

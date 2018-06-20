@@ -7,6 +7,7 @@ import (
 
 	"github.com/epointpayment/mloc_api_go/app/models"
 	Customer "github.com/epointpayment/mloc_api_go/app/services/customer"
+	"github.com/jinzhu/now"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
@@ -195,7 +196,7 @@ type CustomerAdditionalRequest struct {
 
 // Validate checks postform required is validation
 func (ca CustomerAdditionalRequest) Validate() error {
-	return validation.ValidateStruct(&ca,
+	err := validation.ValidateStruct(&ca,
 		validation.Field(&ca.CompanyName, validation.Required),
 		validation.Field(&ca.NetPayPerCheck, validation.Required, validation.Min(0.00)),
 		validation.Field(&ca.IncomeSource, validation.Required),
@@ -203,6 +204,33 @@ func (ca CustomerAdditionalRequest) Validate() error {
 		validation.Field(&ca.NextPayDate, validation.Date("2006-01-02")),
 		validation.Field(&ca.FollowingPayDate, validation.Date("2006-01-02")),
 	)
+	if err != nil {
+		return err
+	}
+
+	// Get current time
+	t := time.Now().UTC()
+	beginningOfYesterday := now.New(t.AddDate(0, 0, -1)).BeginningOfDay()
+
+	// Convert dates to time format
+	nextPayDate, err := time.Parse("2006-01-02", ca.NextPayDate.String)
+	if err != nil {
+		return err
+	}
+	followingPayDate, err := time.Parse("2006-01-02", ca.FollowingPayDate.String)
+	if err != nil {
+		return err
+	}
+
+	// Check if pay dates are valid
+	switch {
+	case nextPayDate.Before(beginningOfYesterday):
+		return Customer.ErrInvalidNextPayDate
+	case followingPayDate.Before(nextPayDate) || followingPayDate.Equal(nextPayDate):
+		return Customer.ErrInvalidFollowingPayDate
+	}
+
+	return nil
 }
 
 // PostCustomerAdditional updates customer additional information
@@ -226,7 +254,13 @@ func (co Controllers) PostCustomerAdditional(c echo.Context) error {
 
 	// Validate struct
 	if err = cr.Validate(); err != nil {
-		err = Customer.ErrCustomerIncompleteInfo
+		switch err {
+		case Customer.ErrInvalidNextPayDate, Customer.ErrInvalidFollowingPayDate:
+			break
+		default:
+			err = Customer.ErrCustomerIncompleteInfo
+		}
+
 		return err
 	}
 
