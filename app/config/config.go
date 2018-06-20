@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/gobuffalo/envy"
@@ -126,6 +127,8 @@ func New() (Configuration, error) {
 		cfg.Mail.ToAddress = envy.Get("MAIL_ADDRESS_TO_OVERRIDE", "")
 		cfg.SMS.ToMobile = envy.Get("SMS_MOBILE_TO_OVERRIDE", "")
 	}
+
+	fmt.Println("Environment: " + cfg.Environiment)
 
 	return cfg, nil
 }
