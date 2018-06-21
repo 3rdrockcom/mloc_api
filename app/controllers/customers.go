@@ -5,13 +5,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/epointpayment/mloc_api_go/app/helpers"
 	"github.com/epointpayment/mloc_api_go/app/models"
 	Customer "github.com/epointpayment/mloc_api_go/app/services/customer"
-	"github.com/jinzhu/now"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
+	"github.com/jinzhu/now"
 	"github.com/labstack/echo"
+	"github.com/shopspring/decimal"
 	null "gopkg.in/guregu/null.v3"
 )
 
@@ -55,6 +57,19 @@ func (co *Controllers) GetCustomer(c echo.Context) error {
 			return err
 		}
 		customerInfo.NextPayDate = null.StringFrom(t.Format("2006-01-02"))
+	}
+
+	if customerInfo.NetPayPerCheck.Valid {
+		customerInfo.NetPayPerCheckDisplay = null.StringFrom(decimal.NewFromFloat(customerInfo.NetPayPerCheck.Float64).StringFixed(helpers.DefaultCurrencyPrecision))
+	}
+
+	if customerInfo.CreditLimit.Valid {
+		customerInfo.CreditLimitDisplay = null.StringFrom(decimal.NewFromFloat(customerInfo.CreditLimit.Float64).StringFixed(helpers.DefaultCurrencyPrecision))
+	}
+
+	if customerInfo.AvailableCredit.Valid {
+		customerInfo.AvailableCreditDisplay = null.StringFrom(decimal.NewFromFloat(customerInfo.AvailableCredit.Float64).StringFixed(helpers.DefaultCurrencyPrecision))
+
 	}
 
 	return SendResponse(c, http.StatusOK, customerInfo)
@@ -318,7 +333,7 @@ type TransactionsHistoryResponse []TransactionResponse
 // TransactionResponse contains information about a loan transaction
 type TransactionResponse struct {
 	CustomerID null.Int    ` json:"fk_customer_id"`
-	Amount     null.Float  `json:"amount"`
+	Amount     string      `json:"amount"`
 	Type       string      `json:"t_type"`
 	Date       null.String `json:"t_date"`
 }
@@ -365,9 +380,10 @@ func (co *Controllers) GetTransactionHistory(c echo.Context) error {
 
 		transactionHistoryResponse = append(transactionHistoryResponse, TransactionResponse{
 			CustomerID: transactionHistory[i].CustomerID,
-			Amount:     transactionHistory[i].Amount,
-			Type:       transactionHistory[i].Type,
-			Date:       date,
+			Amount: decimal.NewFromFloat(transactionHistory[i].Amount.Float64).
+				StringFixed(helpers.DefaultCurrencyPrecision),
+			Type: transactionHistory[i].Type,
+			Date: date,
 		})
 	}
 
@@ -390,6 +406,18 @@ func (co *Controllers) GetCustomerLoan(c echo.Context) error {
 	customerLoanTotal, err := sc.Loan().GetCustomerLoanTotal()
 	if err != nil {
 		return err
+	}
+
+	if customerLoanTotal.TotalPrincipalAmount.Valid {
+		customerLoanTotal.TotalPrincipalAmountDisplay = null.StringFrom(decimal.NewFromFloat(customerLoanTotal.TotalPrincipalAmount.Float64).StringFixed(helpers.DefaultCurrencyPrecision))
+	}
+
+	if customerLoanTotal.TotalFeeAmount.Valid {
+		customerLoanTotal.TotalFeeAmountDisplay = null.StringFrom(decimal.NewFromFloat(customerLoanTotal.TotalFeeAmount.Float64).StringFixed(helpers.DefaultCurrencyPrecision))
+	}
+
+	if customerLoanTotal.TotalAmount.Valid {
+		customerLoanTotal.TotalAmountDisplay = null.StringFrom(decimal.NewFromFloat(customerLoanTotal.TotalAmount.Float64).StringFixed(helpers.DefaultCurrencyPrecision))
 	}
 
 	// Send response
@@ -446,6 +474,18 @@ type PostComputeLoanRequest struct {
 	LoanAmount null.Float `form:"R2" json:"R2"`
 }
 
+// ComputedLoanResponse contains information about a loan
+type ComputeLoanResponse struct {
+	AvailableCredit  string `json:"available_credit"`
+	Amount           string `json:"amount"`
+	Fee              string `json:"fee"`
+	Interest         string `json:"interest"`
+	DateApplied      string `json:"date_applied"`
+	DueDate          string `json:"due_date"`
+	DueDateFormatted string `json:"due_date_formatted"`
+	TotalAmount      string `json:"total_amount"`
+}
+
 // Validate checks postform required is validation
 func (clr PostComputeLoanRequest) Validate() error {
 	return validation.ValidateStruct(&clr,
@@ -478,14 +518,29 @@ func (co *Controllers) PostComputeLoan(c echo.Context) error {
 		return err
 	}
 
+	// Convert loan amount to decimal
+	loanAmount := decimal.NewFromFloat(clr.LoanAmount.Float64).
+		RoundBank(helpers.DefaultCurrencyPrecision)
+
 	// Calculate loan application
-	computedLoan, err := sc.Loan().ComputeLoanApplication(clr.LoanAmount.Float64)
+	computedLoan, err := sc.Loan().ComputeLoanApplication(loanAmount)
 	if err != nil {
 		return err
 	}
 
+	computedLoanResponse := ComputeLoanResponse{
+		AvailableCredit:  computedLoan.AvailableCredit.StringFixed(helpers.DefaultCurrencyPrecision),
+		Amount:           computedLoan.Amount.StringFixed(helpers.DefaultCurrencyPrecision),
+		Fee:              computedLoan.Fee.StringFixed(helpers.DefaultCurrencyPrecision),
+		Interest:         computedLoan.Interest.StringFixed(helpers.DefaultCurrencyPrecision),
+		DateApplied:      computedLoan.DateApplied,
+		DueDate:          computedLoan.DueDate,
+		DueDateFormatted: computedLoan.DueDateFormatted,
+		TotalAmount:      computedLoan.TotalAmount.StringFixed(helpers.DefaultCurrencyPrecision),
+	}
+
 	// Send response
-	return SendResponse(c, http.StatusOK, computedLoan)
+	return SendResponse(c, http.StatusOK, computedLoanResponse)
 }
 
 // PostLoanApplicationRequest contains information for a loan application
@@ -525,8 +580,12 @@ func (co *Controllers) PostLoanApplication(c echo.Context) error {
 		return err
 	}
 
+	// Convert loan amount to decimal
+	loanAmount := decimal.NewFromFloat(lar.LoanAmount.Float64).
+		RoundBank(helpers.DefaultCurrencyPrecision)
+
 	// Calculate loan application
-	err = sc.Loan().ProcessLoanApplication(lar.LoanAmount.Float64)
+	err = sc.Loan().ProcessLoanApplication(loanAmount)
 	if err != nil {
 		return err
 	}
@@ -573,8 +632,12 @@ func (co *Controllers) PostPayLoan(c echo.Context) error {
 		return err
 	}
 
+	// Convert payment amount to decimal
+	loanAmount := decimal.NewFromFloat(plr.LoanAmount.Float64).
+		RoundBank(helpers.DefaultCurrencyPrecision)
+
 	// Calculate loan payment
-	err = sc.Loan().ProcessLoanPayment(plr.LoanAmount.Float64)
+	err = sc.Loan().ProcessLoanPayment(loanAmount)
 	if err != nil {
 		return err
 	}

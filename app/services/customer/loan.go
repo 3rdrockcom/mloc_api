@@ -6,8 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/gommon/log"
-
+	"github.com/epointpayment/mloc_api_go/app/helpers"
 	"github.com/epointpayment/mloc_api_go/app/models"
 	EPOINT "github.com/epointpayment/mloc_api_go/app/services/epoint"
 	Notifications "github.com/epointpayment/mloc_api_go/app/services/notifications"
@@ -15,6 +14,8 @@ import (
 	SMS "github.com/epointpayment/mloc_api_go/app/services/notifications/sms"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
+	"github.com/labstack/gommon/log"
+	"github.com/shopspring/decimal"
 	null "gopkg.in/guregu/null.v3"
 )
 
@@ -219,27 +220,27 @@ func (l *Loan) ProcessCreditLineApplication() (isApproved bool, err error) {
 
 // ComputedLoan contains information about a loan
 type ComputedLoan struct {
-	AvailableCredit  float64 `json:"available_credit"`
-	Amount           float64 `json:"amount"`
-	Fee              float64 `json:"fee"`
-	Interest         float64 `json:"interest"`
-	DateApplied      string  `json:"date_applied"`
-	DueDate          string  `json:"due_date"`
-	DueDateFormatted string  `json:"due_date_formatted"`
-	TotalAmount      float64 `json:"total_amount"`
+	AvailableCredit  decimal.Decimal `json:"available_credit"`
+	Amount           decimal.Decimal `json:"amount"`
+	Fee              decimal.Decimal `json:"fee"`
+	Interest         decimal.Decimal `json:"interest"`
+	DateApplied      string          `json:"date_applied"`
+	DueDate          string          `json:"due_date"`
+	DueDateFormatted string          `json:"due_date_formatted"`
+	TotalAmount      decimal.Decimal `json:"total_amount"`
 }
 
 // ComputeLoanApplication calculates information about a loan
-func (l *Loan) ComputeLoanApplication(baseAmount float64) (computed ComputedLoan, err error) {
+func (l *Loan) ComputeLoanApplication(baseAmount decimal.Decimal) (computed ComputedLoan, err error) {
 	// Get detailed customer information
 	customer, err := l.cs.Info().GetDetails()
 	if err != nil {
 		return
 	}
-	availableCredit := customer.AvailableCredit.ValueOrZero()
+	availableCredit := decimal.NewFromFloat(customer.AvailableCredit.ValueOrZero())
 
 	// Check if requested loan amount is a valid amount
-	if baseAmount > availableCredit {
+	if baseAmount.GreaterThan(availableCredit) {
 		err = ErrNotEnoughAvailableCredit
 		return
 	}
@@ -251,9 +252,10 @@ func (l *Loan) ComputeLoanApplication(baseAmount float64) (computed ComputedLoan
 	}
 
 	// Calculate fee
-	feeAmount := fee.Fixed.ValueOrZero()
+	feeAmount := decimal.NewFromFloat(fee.Fixed.ValueOrZero())
 	if fee.Percentage.ValueOrZero() > 0.0 {
-		feeAmount = (fee.Percentage.ValueOrZero() / 100) * baseAmount
+		feePercentage := decimal.NewFromFloat(fee.Percentage.ValueOrZero() / 100)
+		feeAmount = baseAmount.Mul(feePercentage)
 	}
 
 	// Get loan interest
@@ -263,9 +265,10 @@ func (l *Loan) ComputeLoanApplication(baseAmount float64) (computed ComputedLoan
 	}
 
 	// Calculate interest
-	interestAmount := interest.Fixed.ValueOrZero()
+	interestAmount := decimal.NewFromFloat(interest.Fixed.ValueOrZero())
 	if interest.Percentage.Float64 > 0.0 {
-		interestAmount = (interest.Percentage.ValueOrZero() / 100) * baseAmount
+		feeInterest := decimal.NewFromFloat(interest.Percentage.ValueOrZero() / 100)
+		interestAmount = baseAmount.Mul(feeInterest)
 	}
 
 	// Get loan credit limit information
@@ -280,29 +283,29 @@ func (l *Loan) ComputeLoanApplication(baseAmount float64) (computed ComputedLoan
 	dueDate := t.AddDate(0, 0, int(creditLimit.NumberOfDays.Int64))
 
 	// Prepare data
-	computed.AvailableCredit = availableCredit
-	computed.Amount = numberFormat(baseAmount, 2)
-	computed.Fee = numberFormat(feeAmount, 2)
-	computed.Interest = numberFormat(interestAmount, 2)
+	computed.AvailableCredit = availableCredit.RoundBank(helpers.DefaultCurrencyPrecision)
+	computed.Amount = baseAmount.RoundBank(helpers.DefaultCurrencyPrecision)
+	computed.Fee = feeAmount.RoundBank(helpers.DefaultCurrencyPrecision)
+	computed.Interest = interestAmount.RoundBank(helpers.DefaultCurrencyPrecision)
 	computed.DateApplied = t.Format("2006-01-02 15:04:05")
 	computed.DueDate = dueDate.Format("2006-01-02 15:04:05")
 	computed.DueDateFormatted = dueDate.Format("01-02-2006 03:04 PM")
-	computed.TotalAmount = computed.Amount + computed.Fee + computed.Interest
+	computed.TotalAmount = computed.Amount.Add(computed.Fee).Add(computed.Interest)
 
 	return
 }
 
 // ProcessLoanApplication processes a loan application
-func (l *Loan) ProcessLoanApplication(baseAmount float64) (err error) {
+func (l *Loan) ProcessLoanApplication(baseAmount decimal.Decimal) (err error) {
 	// Get detailed customer information
 	customer, err := l.cs.Info().GetDetails()
 	if err != nil {
 		return
 	}
-	availableCredit := customer.AvailableCredit.ValueOrZero()
+	availableCredit := decimal.NewFromFloat(customer.AvailableCredit.ValueOrZero())
 
 	// Check if requested loan amount is a valid amount
-	if baseAmount > availableCredit {
+	if baseAmount.GreaterThan(availableCredit) {
 		err = ErrNotEnoughAvailableCredit
 		return
 	}
@@ -325,12 +328,17 @@ func (l *Loan) ProcessLoanApplication(baseAmount float64) (err error) {
 	// Determine loan date
 	t := time.Now().UTC()
 
+	loanAmount, _ := baseAmount.Float64()
+	loanInterest, _ := computed.Interest.Float64()
+	loanFee, _ := computed.Fee.Float64()
+	loanTotal, _ := computed.TotalAmount.Float64()
+
 	customerLoanApplication := models.CustomerLoanApplication{
 		CustomerID:     null.IntFrom(int64(customer.ID)),
-		LoanAmount:     null.FloatFrom(baseAmount),
-		InterestAmount: null.FloatFrom(computed.Interest),
-		FeeAmount:      null.FloatFrom(computed.Fee),
-		TotalAmount:    null.FloatFrom(computed.TotalAmount),
+		LoanAmount:     null.FloatFrom(loanAmount),
+		InterestAmount: null.FloatFrom(loanInterest),
+		FeeAmount:      null.FloatFrom(loanFee),
+		TotalAmount:    null.FloatFrom(loanTotal),
 		ReferenceCode:  null.StringFrom(refCode),
 		DueDate:        null.StringFrom(computed.DueDate),
 		LoanDate:       null.StringFrom(t.Format("2006-01-02 15:04:05")),
@@ -364,7 +372,7 @@ func (l *Loan) ProcessLoanApplication(baseAmount float64) (err error) {
 
 		// Transfer funds from prefund to customer wallet using epoint service
 		fundTransferRequest := EPOINT.FundTransferRequest{
-			Amount:          baseAmount,
+			Amount:          baseAmount.StringFixed(helpers.DefaultCurrencyPrecision),
 			ClientReference: customerLoanApplication.ReferenceCode.String,
 			Source:          "P",
 			Destination:     strconv.FormatInt(customer.ProgramCustomerID.Int64, 10),
@@ -412,7 +420,7 @@ func (l *Loan) ProcessLoanApplication(baseAmount float64) (err error) {
 
 	// Prepare template token replacer
 	r := strings.NewReplacer(
-		"{amount}", strconv.FormatFloat(baseAmount, 'f', -1, 64),
+		"{amount}", baseAmount.StringFixed(helpers.DefaultCurrencyPrecision),
 		"{firstname}", customer.FirstName.String,
 	)
 
@@ -449,7 +457,7 @@ func (l *Loan) ProcessLoanApplication(baseAmount float64) (err error) {
 }
 
 // ProcessLoanPayment processes a loan payment
-func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
+func (l *Loan) ProcessLoanPayment(paymentAmount decimal.Decimal) (err error) {
 	// Get detailed customer information
 	customer, err := l.cs.Info().GetDetails()
 	if err != nil {
@@ -482,7 +490,7 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 	}
 
 	// Check if there is enough funds available in wallet for payment
-	if paymentAmount > cb.AvailableBalance {
+	if paymentAmount.GreaterThan(cb.AvailableBalance) {
 		err = ErrIssuerInsufficientFunds
 		return
 	}
@@ -495,7 +503,7 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 
 	// Transfer funds from customer wallet to settlement using epoint service
 	fundTransferRequest := EPOINT.FundTransferRequest{
-		Amount:          paymentAmount,
+		Amount:          paymentAmount.StringFixed(helpers.DefaultCurrencyPrecision),
 		ClientReference: refCode,
 		Source:          strconv.FormatInt(customer.ProgramCustomerID.Int64, 10),
 		Destination:     "S",
@@ -515,10 +523,11 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 	}
 
 	// Prepare loan payment information
+	pa, _ := paymentAmount.Float64()
 	customerPayment := models.CustomerPayment{
 		CustomerID:          null.IntFrom(int64(customer.ID)),
 		ReferenceCode:       null.StringFrom(refCode),
-		PaymentAmount:       null.FloatFrom(paymentAmount),
+		PaymentAmount:       null.FloatFrom(pa),
 		DatePaid:            null.StringFrom(t.Format("2006-01-02 15:04:05")),
 		PaidBy:              null.StringFrom(strconv.FormatInt(int64(customer.ID), 10)),
 		EpointTransactionID: null.StringFrom(ft.TransactionID),
@@ -538,64 +547,69 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 	// Set payment amount left to distribute among loans
 	paymentAmountBalance := paymentAmount
 	for _, loanEntry := range loanList {
-		if paymentAmountBalance <= 0.0 {
+		if paymentAmountBalance.LessThanOrEqual(decimal.Zero) {
 			continue
 		}
 		isPaid := 0
-		loanTotalPaidAmount := loanEntry.TotalPaidAmount.ValueOrZero()
+		loanTotalPaidAmount := decimal.NewFromFloat(loanEntry.TotalPaidAmount.ValueOrZero())
 
-		loanPrincipalAmount := loanEntry.LoanAmount.ValueOrZero()
-		loanPrincipalAmountPaid := loanEntry.TotalPaidPrincipal.ValueOrZero()
-		loanPrincipalAmountUnpaid := loanPrincipalAmount - loanPrincipalAmountPaid
-		paymentPrincipalApplied := 0.0
+		loanPrincipalAmount := decimal.NewFromFloat(loanEntry.LoanAmount.ValueOrZero())
+		loanPrincipalAmountPaid := decimal.NewFromFloat(loanEntry.TotalPaidPrincipal.ValueOrZero())
+		loanPrincipalAmountUnpaid := loanPrincipalAmount.Sub(loanPrincipalAmountPaid)
+		paymentPrincipalApplied := decimal.Zero
 
-		loanFeeAmount := loanEntry.FeeAmount.ValueOrZero()
-		loanFeeAmountPaid := loanEntry.TotalPaidFee.ValueOrZero()
-		loanFeeAmountUnpaid := loanFeeAmount - loanFeeAmountPaid
-		paymentFeeApplied := 0.0
+		loanFeeAmount := decimal.NewFromFloat(loanEntry.FeeAmount.ValueOrZero())
+		loanFeeAmountPaid := decimal.NewFromFloat(loanEntry.TotalPaidFee.ValueOrZero())
+		loanFeeAmountUnpaid := loanFeeAmount.Sub(loanFeeAmountPaid)
+		paymentFeeApplied := decimal.Zero
 
 		// Use available payment balance to pay loan fee
-		if loanFeeAmountUnpaid > 0.0 {
+		if loanFeeAmountUnpaid.GreaterThan(decimal.Zero) {
 			// Pay loan fee with payment balance
-			if paymentAmountBalance >= loanFeeAmountUnpaid {
+			if paymentAmountBalance.GreaterThanOrEqual(loanFeeAmountUnpaid) {
 				// Pay loan fee entirely
 				paymentFeeApplied = loanFeeAmountUnpaid
-				paymentAmountBalance -= paymentFeeApplied
+				paymentAmountBalance = paymentAmountBalance.Sub(paymentFeeApplied)
 			} else {
 				// Pay loan fee with remaining payment balance
 				paymentFeeApplied = paymentAmountBalance
-				paymentAmountBalance = 0
+				paymentAmountBalance = decimal.Zero
 			}
 		}
 
 		// Use available payment balance to pay loan principal
-		if loanPrincipalAmountUnpaid > 0.0 {
+		if loanPrincipalAmountUnpaid.GreaterThan(decimal.Zero) {
 			// Pay loan principal with payment balance
-			if paymentAmountBalance >= loanPrincipalAmountUnpaid {
+			if paymentAmountBalance.GreaterThanOrEqual(loanPrincipalAmountUnpaid) {
 				// Pay loan principal entirely
 				paymentPrincipalApplied = loanPrincipalAmountUnpaid
-				paymentAmountBalance -= paymentPrincipalApplied
+				paymentAmountBalance = paymentAmountBalance.Sub(paymentPrincipalApplied)
 			} else {
 				// Pay loan principal with remaining payment balance
 				paymentPrincipalApplied = paymentAmountBalance
-				paymentAmountBalance = 0
+				paymentAmountBalance = decimal.Zero
 			}
 		}
 
 		// Check if loan has been paid off
-		totalPaidFee := loanFeeAmountPaid + paymentFeeApplied
-		totalPaidPrincipal := loanPrincipalAmountPaid + paymentPrincipalApplied
-		if totalPaidPrincipal == loanPrincipalAmount && totalPaidFee == loanFeeAmount {
+		totalPaidFee := loanFeeAmountPaid.Add(paymentFeeApplied)
+		totalPaidPrincipal := loanPrincipalAmountPaid.Add(paymentPrincipalApplied)
+		if totalPaidPrincipal.Equal(loanPrincipalAmount) && totalPaidFee.Equal(loanFeeAmount) {
 			isPaid = 1
 		}
+
+		// Convert to float
+		totalPaidFeeAmount, _ := totalPaidFee.Float64()
+		totalPaidPrincipalAmount, _ := totalPaidPrincipal.Float64()
+		totalPaidAmount, _ := loanTotalPaidAmount.Add(paymentPrincipalApplied).Add(paymentFeeApplied).Float64()
 
 		// Update customer loan information
 		customerLoan := models.CustomerLoan{
 			ID:                 loanEntry.ID,
-			TotalPaidPrincipal: null.FloatFrom(totalPaidPrincipal),
-			TotalPaidFee:       null.FloatFrom(totalPaidFee),
+			TotalPaidPrincipal: null.FloatFrom(totalPaidPrincipalAmount),
+			TotalPaidFee:       null.FloatFrom(totalPaidFeeAmount),
 			IsPaid:             null.IntFrom(int64(isPaid)),
-			TotalPaidAmount:    null.FloatFrom(loanTotalPaidAmount + paymentPrincipalApplied + paymentFeeApplied),
+			TotalPaidAmount:    null.FloatFrom(totalPaidAmount),
 		}
 		err = tx.Model(&customerLoan).Update(
 			"TotalPaidPrincipal",
@@ -608,14 +622,19 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 			return
 		}
 
+		// Convert to float
+		settlementAmount, _ := paymentPrincipalApplied.Add(paymentFeeApplied).Float64()
+		principalAmount, _ := paymentPrincipalApplied.Float64()
+		feeAmount, _ := paymentFeeApplied.Float64()
+
 		// Insert settlement information
 		customerSettlement := models.CustomerSettlement{
 			CustomerID:        null.IntFrom(int64(customer.ID)),
 			CustomerLoanID:    null.IntFrom(int64(loanEntry.ID)),
 			CustomerPaymentID: null.IntFrom(int64(customerPayment.ID)),
-			SettlementAmount:  null.FloatFrom(paymentPrincipalApplied + paymentFeeApplied),
-			PrincipalAmount:   null.FloatFrom(paymentPrincipalApplied),
-			FeeAmount:         null.FloatFrom(paymentFeeApplied),
+			SettlementAmount:  null.FloatFrom(settlementAmount),
+			PrincipalAmount:   null.FloatFrom(principalAmount),
+			FeeAmount:         null.FloatFrom(feeAmount),
 			CreatedDate:       null.StringFrom(t.Format("2006-01-02 15:04:05")),
 		}
 		err = tx.Model(&customerSettlement).Insert()
@@ -647,7 +666,7 @@ func (l *Loan) ProcessLoanPayment(paymentAmount float64) (err error) {
 
 	// Prepare template token replacer
 	r := strings.NewReplacer(
-		"{amount}", strconv.FormatFloat(paymentAmount, 'f', -1, 64),
+		"{amount}", paymentAmount.StringFixed(helpers.DefaultCurrencyPrecision),
 		"{firstname}", customer.FirstName.String,
 	)
 

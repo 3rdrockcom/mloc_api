@@ -11,6 +11,7 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/config"
 
 	httpclient "github.com/ddliu/go-httpclient"
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -120,7 +121,7 @@ func (e *EpointService) GetLogin() (res LoginResponseMessage, err error) {
 
 // FundTransferRequest contains request information for fund transfers
 type FundTransferRequest struct {
-	Amount          float64
+	Amount          string
 	ClientReference string
 	Source          string
 	Destination     string
@@ -159,7 +160,7 @@ func (e *EpointService) GetFundTransfer(req FundTransferRequest) (res FundTransf
 		resp := new(httpclient.Response)
 		resp, err = httpclient.Get(u.String(), map[string]string{
 			"P01": e.sessionID,
-			"P02": strconv.FormatFloat(req.Amount, 'f', -1, 64),
+			"P02": req.Amount,
 			"P03": req.ClientReference, // must unique
 			"P04": req.Source,          // P,S,F, or customer ID
 			"P05": req.Destination,     // P,S,F, or customer ID
@@ -217,7 +218,7 @@ type CustomerBalanceRequest struct {
 
 // CustomerBalanceResponseMessage  contains information about a customer's balance
 type CustomerBalanceResponseMessage struct {
-	AvailableBalance float64 `json:"available_balance"`
+	AvailableBalance decimal.Decimal `json:"available_balance"`
 }
 
 // GetCustomerBalance obtains a customer's available balance

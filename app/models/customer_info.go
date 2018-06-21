@@ -28,7 +28,7 @@ type CustomerInfo struct {
 	Email                 null.String `db:"email" json:"email"`
 	CompanyName           null.String `db:"company_name" json:"company_name"`
 	PhoneNumber           null.String `db:"phone_number" json:"phone_number"`
-	NetPayPerCheck        null.Float  `db:"net_pay_percheck" json:"net_pay_percheck"`
+	NetPayPerCheck        null.Float  `db:"net_pay_percheck" json:"-"`
 	IncomeSourceID        null.Int    `db:"income_source_id" json:"income_source_id"`
 	MLOCAccess            zero.Int    `db:"mloc_access" json:"mloc_access"`
 	Registration          zero.Int    `db:"registration" json:"registration"`
@@ -38,12 +38,16 @@ type CustomerInfo struct {
 	PayFrequencyDesc      null.String `db:"pay_frequency_desc" json:"pay_frequency_desc"`
 	NextPayDate           null.String `db:"next_paydate" json:"next_paydate"` //may need to chage date type
 	Key                   null.String `db:"key" json:"key"`
-	CreditLimit           null.Float  `db:"credit_limit" json:"credit_limit"`
-	AvailableCredit       null.Float  `db:"available_credit" json:"available_credit"`
+	CreditLimit           null.Float  `db:"credit_limit" json:"-"`
+	AvailableCredit       null.Float  `db:"available_credit" json:"-"`
 	IsSuspended           string      `db:"is_suspended" json:"is_suspended"`
 	CreditLineID          null.Int    `json:"-"`
 	ProgramCustomerID     null.Int    `json:"-"`
 	ProgramCustomerMobile null.String `json:"-"`
+
+	NetPayPerCheckDisplay  null.String `db:"-" json:"net_pay_percheck"`
+	CreditLimitDisplay     null.String `db:"-" json:"credit_limit"`
+	AvailableCreditDisplay null.String `db:"-" json:"available_credit"`
 }
 
 // TableName gets the name of the database table
