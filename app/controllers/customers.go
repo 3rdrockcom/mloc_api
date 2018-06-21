@@ -226,23 +226,37 @@ func (ca CustomerAdditionalRequest) Validate() error {
 	// Get current time
 	t := time.Now().UTC()
 	beginningOfYesterday := now.New(t.AddDate(0, 0, -1)).BeginningOfDay()
+	var nextPayDate, followingPayDate time.Time
 
-	// Convert dates to time format
-	nextPayDate, err := time.Parse("2006-01-02", ca.NextPayDate.String)
-	if err != nil {
-		return err
-	}
-	followingPayDate, err := time.Parse("2006-01-02", ca.FollowingPayDate.String)
-	if err != nil {
-		return err
+	// Validate next pay date
+	if ca.NextPayDate.Valid {
+		nextPayDate, err = time.Parse("2006-01-02", ca.NextPayDate.String)
+		if err != nil {
+			return err
+		}
+
+		// Next pay date must be equal or after yesterday
+		if nextPayDate.Before(beginningOfYesterday) {
+			return Customer.ErrInvalidNextPayDate
+		}
 	}
 
-	// Check if pay dates are valid
-	switch {
-	case nextPayDate.Before(beginningOfYesterday):
-		return Customer.ErrInvalidNextPayDate
-	case followingPayDate.Before(nextPayDate) || followingPayDate.Equal(nextPayDate):
-		return Customer.ErrInvalidFollowingPayDate
+	// Validate following pay date
+	if ca.FollowingPayDate.Valid {
+		// Following pay date requires next pay date
+		if !ca.NextPayDate.Valid {
+			return Customer.ErrInvalidNextPayDate
+		}
+
+		followingPayDate, err = time.Parse("2006-01-02", ca.FollowingPayDate.String)
+		if err != nil {
+			return err
+		}
+
+		// Following pay date must be after next pay date
+		if followingPayDate.Before(nextPayDate) || followingPayDate.Equal(nextPayDate) {
+			return Customer.ErrInvalidFollowingPayDate
+		}
 	}
 
 	return nil
