@@ -1,10 +1,13 @@
 package helpers
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/labstack/gommon/log"
 	"github.com/rmg/iso4217"
+	"github.com/shopspring/decimal"
+	null "gopkg.in/guregu/null.v3"
 )
 
 var (
@@ -16,6 +19,9 @@ var (
 
 	// ErrInvalidCurrency is an error given when the default currency is set to an invalid value
 	ErrInvalidCurrency = errors.New("Invalid default currency used")
+
+	// ErrInvalidCurrencyAmount is an error given when the default currency is set to an invalid value
+	ErrInvalidCurrencyAmount = errors.New("Invalid default currency amount used")
 )
 
 func init() {
@@ -27,4 +33,29 @@ func init() {
 	}
 
 	DefaultCurrencyPrecision = int32(currencyPrecision)
+}
+
+// ValidateCurrencyAmount is used by the validator to check if value is valid
+func ValidateCurrencyAmount(value interface{}) error {
+	var s string
+
+	switch value.(type) {
+	case null.String:
+		s = value.(null.String).String
+	case json.Number:
+		s = value.(json.Number).String()
+	}
+
+	dec, err := decimal.NewFromString(s)
+	if err != nil {
+		return err
+	}
+
+	if dec.Truncate(DefaultCurrencyPrecision).Equal(dec) {
+		if dec.GreaterThan(decimal.Zero) {
+			return nil
+		}
+	}
+
+	return ErrInvalidCurrencyAmount
 }

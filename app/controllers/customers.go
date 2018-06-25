@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -202,7 +203,7 @@ func (co Controllers) PostCustomerBasic(c echo.Context) error {
 type CustomerAdditionalRequest struct {
 	CompanyName      null.String `form:"R1" json:"R1"`
 	PhoneNumber      null.String `form:"R2" json:"R2"`
-	NetPayPerCheck   null.Float  `form:"R3" json:"R3"`
+	NetPayPerCheck   json.Number `form:"R3" json:"R3"`
 	IncomeSource     null.Int    `form:"R4" json:"R4"`
 	PayFrequency     null.Int    `form:"R5" json:"R5"`
 	NextPayDate      null.String `form:"R6" json:"R6"`
@@ -213,7 +214,7 @@ type CustomerAdditionalRequest struct {
 func (ca CustomerAdditionalRequest) Validate() error {
 	err := validation.ValidateStruct(&ca,
 		validation.Field(&ca.CompanyName, validation.Required),
-		validation.Field(&ca.NetPayPerCheck, validation.Required, validation.Min(0.00)),
+		validation.Field(&ca.NetPayPerCheck, validation.Required, validation.By(helpers.ValidateCurrencyAmount)),
 		validation.Field(&ca.IncomeSource, validation.Required),
 		validation.Field(&ca.PayFrequency, validation.Required),
 		validation.Field(&ca.NextPayDate, validation.Date("2006-01-02")),
@@ -311,7 +312,9 @@ func (co Controllers) PostCustomerAdditional(c echo.Context) error {
 			customerAdditional.PhoneNumber = cr.PhoneNumber
 		case "R3":
 			field = "NetPayPerCheck"
-			customerAdditional.NetPayPerCheck = cr.NetPayPerCheck
+			netPayPerCheckDecimal, _ := decimal.NewFromString(cr.NetPayPerCheck.String())
+			netPayPerCheck, _ := netPayPerCheckDecimal.Float64()
+			customerAdditional.NetPayPerCheck = null.FloatFrom(netPayPerCheck)
 		case "R4":
 			field = "IncomeSource"
 			customerAdditional.IncomeSource = cr.IncomeSource
@@ -485,10 +488,10 @@ func (co *Controllers) PostCreditLineApplication(c echo.Context) error {
 
 // PostComputeLoanRequest contains information for computing a loan application
 type PostComputeLoanRequest struct {
-	LoanAmount null.Float `form:"R2" json:"R2"`
+	LoanAmount null.String `form:"R2" json:"R2"`
 }
 
-// ComputedLoanResponse contains information about a loan
+// ComputeLoanResponse contains information about a loan
 type ComputeLoanResponse struct {
 	AvailableCredit  string `json:"available_credit"`
 	Amount           string `json:"amount"`
@@ -503,7 +506,7 @@ type ComputeLoanResponse struct {
 // Validate checks postform required is validation
 func (clr PostComputeLoanRequest) Validate() error {
 	return validation.ValidateStruct(&clr,
-		validation.Field(&clr.LoanAmount, validation.Required, validation.Min(0.00)),
+		validation.Field(&clr.LoanAmount, validation.Required, validation.By(helpers.ValidateCurrencyAmount)),
 	)
 }
 
@@ -533,8 +536,8 @@ func (co *Controllers) PostComputeLoan(c echo.Context) error {
 	}
 
 	// Convert loan amount to decimal
-	loanAmount := decimal.NewFromFloat(clr.LoanAmount.Float64).
-		RoundBank(helpers.DefaultCurrencyPrecision)
+	loanAmount, _ := decimal.NewFromString(clr.LoanAmount.String)
+	loanAmount = loanAmount.RoundBank(helpers.DefaultCurrencyPrecision)
 
 	// Calculate loan application
 	computedLoan, err := sc.Loan().ComputeLoanApplication(loanAmount)
@@ -559,13 +562,13 @@ func (co *Controllers) PostComputeLoan(c echo.Context) error {
 
 // PostLoanApplicationRequest contains information for a loan application
 type PostLoanApplicationRequest struct {
-	LoanAmount null.Float `form:"R2" json:"R2"`
+	LoanAmount null.String `form:"R2" json:"R2"`
 }
 
 // Validate checks postform required is validation
 func (lar PostLoanApplicationRequest) Validate() error {
 	return validation.ValidateStruct(&lar,
-		validation.Field(&lar.LoanAmount, validation.Required, validation.Min(0.00)),
+		validation.Field(&lar.LoanAmount, validation.Required, validation.By(helpers.ValidateCurrencyAmount)),
 	)
 }
 
@@ -595,8 +598,8 @@ func (co *Controllers) PostLoanApplication(c echo.Context) error {
 	}
 
 	// Convert loan amount to decimal
-	loanAmount := decimal.NewFromFloat(lar.LoanAmount.Float64).
-		RoundBank(helpers.DefaultCurrencyPrecision)
+	loanAmount, _ := decimal.NewFromString(lar.LoanAmount.String)
+	loanAmount = loanAmount.RoundBank(helpers.DefaultCurrencyPrecision)
 
 	// Calculate loan application
 	err = sc.Loan().ProcessLoanApplication(loanAmount)
@@ -611,13 +614,13 @@ func (co *Controllers) PostLoanApplication(c echo.Context) error {
 
 // PostPayLoanRequest contains information about a loan payment
 type PostPayLoanRequest struct {
-	LoanAmount null.Float `form:"R2" json:"R2"`
+	LoanAmount null.String `form:"R2" json:"R2"`
 }
 
 // Validate checks postform required is validation
 func (plr PostPayLoanRequest) Validate() error {
 	return validation.ValidateStruct(&plr,
-		validation.Field(&plr.LoanAmount, validation.Required, validation.Min(0.00)),
+		validation.Field(&plr.LoanAmount, validation.Required, validation.By(helpers.ValidateCurrencyAmount)),
 	)
 }
 
@@ -647,8 +650,8 @@ func (co *Controllers) PostPayLoan(c echo.Context) error {
 	}
 
 	// Convert payment amount to decimal
-	loanAmount := decimal.NewFromFloat(plr.LoanAmount.Float64).
-		RoundBank(helpers.DefaultCurrencyPrecision)
+	loanAmount, _ := decimal.NewFromString(plr.LoanAmount.String)
+	loanAmount = loanAmount.RoundBank(helpers.DefaultCurrencyPrecision)
 
 	// Calculate loan payment
 	err = sc.Loan().ProcessLoanPayment(loanAmount)
