@@ -8,6 +8,12 @@
   version = "v9"
 
 [[projects]]
+  name = "github.com/cespare/reflex"
+  packages = ["."]
+  revision = "3733f0e801e66d380f156c4aefdb85ff827cca71"
+  version = "v0.2.0"
+
+[[projects]]
   name = "github.com/ddliu/go-httpclient"
   packages = ["."]
   revision = "72917d81d0423a6235790470d15a4d099e3490f9"
@@ -18,6 +24,12 @@
   packages = ["."]
   revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
   version = "v3.2.0"
+
+[[projects]]
+  name = "github.com/fsnotify/fsnotify"
+  packages = ["."]
+  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  version = "v1.4.7"
 
 [[projects]]
   name = "github.com/go-mail/mail"
@@ -59,10 +71,28 @@
   version = "v1.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/jinzhu/now"
+  packages = ["."]
+  revision = "ed742868f2aebdb1c0c437bf4f7257f88834b66f"
+
+[[projects]]
   name = "github.com/joho/godotenv"
   packages = ["."]
   revision = "a79fa1e548e2c689c241d10173efd51e5d689d5b"
   version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/kballard/go-shellquote"
+  packages = ["."]
+  revision = "95032a82bc518f77982ea72343cc1ade730072f0"
+
+[[projects]]
+  name = "github.com/kr/pty"
+  packages = ["."]
+  revision = "fa756f09eeb418bf1cc6268c66ceaad9bb98f598"
+  version = "v1.1.2"
 
 [[projects]]
   name = "github.com/labstack/echo"
@@ -97,10 +127,40 @@
   version = "v0.0.3"
 
 [[projects]]
+  name = "github.com/monoculum/formam"
+  packages = ["."]
+  revision = "99ca9dcbaca6d91e9665f817d0da23af6184ced3"
+  version = "v3.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/nuveo/infobip"
   packages = ["."]
   revision = "829c049ec1c342cca1a54f2867987c86a4247243"
+
+[[projects]]
+  name = "github.com/ogier/pflag"
+  packages = ["."]
+  revision = "32a05c62658bd1d7c7e75cbc8195de5d585fde0f"
+  version = "v0.0.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/rmg/iso4217"
+  packages = ["."]
+  revision = "cfb0c10f43977b970d9d2659362829a8bb77dfe0"
+
+[[projects]]
+  name = "github.com/shopspring/decimal"
+  packages = ["."]
+  revision = "69b3a8ad1f5f2c8bd855cb6506d18593064a346b"
+  version = "1.0.1"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
 
 [[projects]]
   name = "github.com/spf13/cobra"
@@ -131,14 +191,18 @@
   name = "golang.org/x/crypto"
   packages = [
     "acme",
-    "acme/autocert"
+    "acme/autocert",
+    "ssh/terminal"
   ]
   revision = "5cd40a374b80f104c75043e6a04071d3a743ffd9"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "8883426083c04a2627e6e59d84d5f6fb63d16c91"
 
 [[projects]]
@@ -165,6 +229,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4a84d79ac21e6aa8610616415ac205f981e377756a1e32a9ec99f9a6c32f626d"
+  inputs-digest = "cd449779d1c60f2cc64e2b0f7cee3bf5f69b2fd98cc37f38ab75a6865c480e73"
   solver-name = "gps-cdcl"
   solver-version = 1

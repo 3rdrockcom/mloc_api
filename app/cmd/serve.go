@@ -1,11 +1,10 @@
 package cmd
 
 import (
-	"log"
-
 	"github.com/epointpayment/mloc_api_go/app/config"
 	"github.com/epointpayment/mloc_api_go/app/controllers"
 	"github.com/epointpayment/mloc_api_go/app/database"
+	"github.com/epointpayment/mloc_api_go/app/log"
 	"github.com/epointpayment/mloc_api_go/app/router"
 	"github.com/epointpayment/mloc_api_go/app/services"
 
@@ -23,24 +22,28 @@ var serveCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 
+		// initiate logging
+		log.Start()
+		defer log.Stop()
+
 		// load config
 		cfg, err := config.New()
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatal(err)
 		}
 
 		// Create new connection handler for database
 		db := database.NewDatabase(cfg.DB.Driver, cfg.DB.DSN)
 		err = db.Open()
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatal(err)
 		}
 		defer db.Close()
 
 		// Setup services
 		err = services.New(db)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatal(err)
 		}
 
 		// Setup router and run
@@ -48,7 +51,7 @@ var serveCmd = &cobra.Command{
 		r := router.NewRouter(c)
 		err = r.Run()
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatal(err)
 		}
 	},
 }
