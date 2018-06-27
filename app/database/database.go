@@ -1,8 +1,10 @@
 package database
 
 import (
-	"log"
+	"fmt"
 	"time"
+
+	"github.com/epointpayment/mloc_api_go/app/log"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	_ "github.com/go-sql-driver/mysql" // Mysql driver for database library
@@ -45,7 +47,9 @@ func (d Database) Open() error {
 	if err != nil {
 		return err
 	}
-	db.LogFunc = log.Printf
+
+	// setup logging
+	db.PerfFunc = logFunc
 
 	// Set database connection settings
 	db.DB().SetMaxOpenConns(maxOpenConns)
@@ -68,4 +72,14 @@ func (d Database) GetInstance() *dbx.DB {
 // Get returns the database handler
 func Get() *dbx.DB {
 	return db
+}
+
+// logFunc is used to log the SQL execution time.
+func logFunc(ns int64, sql string, execute bool) {
+	log.GetInstance().WithFields(map[string]interface{}{
+		"elasped":       ns,
+		"elasped_human": fmt.Sprintf("%fms", float64(ns)/1000000.0),
+		"sql":           sql,
+		"execute":       execute,
+	}).Debug("SQL Statement")
 }

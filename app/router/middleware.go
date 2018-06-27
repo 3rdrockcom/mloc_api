@@ -1,10 +1,10 @@
 package router
 
 import (
-	"log"
-
 	"github.com/epointpayment/mloc_api_go/app/config"
+	"github.com/epointpayment/mloc_api_go/app/log"
 	"github.com/epointpayment/mloc_api_go/app/router/middleware/auth"
+	"github.com/epointpayment/mloc_api_go/app/router/middleware/logger"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -13,13 +13,18 @@ import (
 // appendMiddleware registers middleware
 func (r *Router) appendMiddleware() {
 	r.e.Pre(middleware.RemoveTrailingSlash())
-	r.e.Use(middleware.Logger())
 	r.e.Use(middleware.Recover())
+
+	// logger
+	r.e.Logger = log.Logger()
+	r.e.Use(logger.LoggerWithConfig(logger.LoggerConfig{
+		Logger: log.Logger().Logger,
+	}))
 
 	if config.IsDev() {
 		r.e.Use(middleware.BodyDump(func(c echo.Context, reqBody, resBody []byte) {
-			log.Println("Request Body:\n" + string(reqBody))
-			log.Println("Response Body:\n" + string(resBody))
+			log.GetInstance().Debug("Request Body:\n" + string(reqBody))
+			log.GetInstance().Debug("Response Body:\n" + string(resBody))
 		}))
 	}
 }
