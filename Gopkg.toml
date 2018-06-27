@@ -24,6 +24,7 @@
 #   go-tests = true
 #   unused-packages = true
 
+required = ["github.com/cespare/reflex"]
 
 [[constraint]]
   name = "github.com/ddliu/go-httpclient"
