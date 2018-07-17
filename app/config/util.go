@@ -15,10 +15,10 @@ func generateDSN(d Database) string {
 
 // IsDev determines if the application environment is in development mode
 func IsDev() bool {
-	return cfg.Environiment == EnvDevelopment
+	return cfg.Environment == EnvDevelopment
 }
 
 // IsProd determines if the application environment is in production mode
 func IsProd() bool {
-	return cfg.Environiment == EnvProduction
+	return cfg.Environment == EnvProduction
 }

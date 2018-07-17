@@ -6,7 +6,7 @@ TARGET=mloc
 OPTIONS=""
 
 # These are the values we want to pass for VERSION and BUILD
-VERSION=1.0.2
+VERSION=1.0.3
 BUILD=`git rev-parse HEAD`
 
 # Setup the -ldflags option for go build here, interpolate the variable values

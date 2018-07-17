@@ -168,7 +168,7 @@ func (co Controllers) PostCustomerBasic(c echo.Context) error {
 			field = "State"
 			customerBasic.State = cr.State
 		case "R10":
-			field = "State"
+			field = "City"
 			customerBasic.City = cr.City
 		case "R11":
 			field = "ZipCode"
