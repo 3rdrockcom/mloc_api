@@ -31,6 +31,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.SetMode(cfg.Environment)
 
 		// Create new connection handler for database
 		db := database.NewDatabase(cfg.DB.Driver, cfg.DB.DSN)
