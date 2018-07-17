@@ -26,6 +26,8 @@ func (r *Router) appendErrorHandler() {
 		// API Service
 		case API.ErrInvalidAPIKey.Error():
 			code = http.StatusForbidden
+		case API.ErrInvalidProgramID.Error():
+			code = http.StatusBadRequest
 		case API.ErrInvalidProgramCustomerID.Error():
 			code = http.StatusBadRequest
 
