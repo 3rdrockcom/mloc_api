@@ -9,13 +9,13 @@ import (
 
 // Configuration contains the application configuration
 type Configuration struct {
-	Environiment string
-	Application  Application
-	Server       Server
-	DB           Database
-	Mail         Mail
-	SMS          SMS
-	Epoint       Epoint
+	Environment string
+	Application Application
+	Server      Server
+	DB          Database
+	Mail        Mail
+	SMS         SMS
+	Epoint      Epoint
 }
 
 // Application contains application information
@@ -79,7 +79,7 @@ var cfg Configuration
 // New processes the configuration values
 func New() (Configuration, error) {
 	// Base
-	cfg.Environiment = envy.Get("ENVIRONMENT", "development")
+	cfg.Environment = envy.Get("ENVIRONMENT", "development")
 
 	// Application
 	cfg.Application.Name = envy.Get("NAME", "app")
@@ -128,7 +128,7 @@ func New() (Configuration, error) {
 		cfg.SMS.ToMobile = envy.Get("SMS_MOBILE_TO_OVERRIDE", "")
 	}
 
-	fmt.Println("Environment: " + cfg.Environiment)
+	fmt.Println("Environment: " + cfg.Environment)
 
 	return cfg, nil
 }
