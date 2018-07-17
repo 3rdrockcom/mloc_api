@@ -63,8 +63,8 @@ required = ["github.com/cespare/reflex"]
   version = "0.0.3"
 
 [[constraint]]
-  name = "gopkg.in/gomail.v2"
-  version = "2.0.0"
+  name = "github.com/go-mail/mail"
+  version = "2.2.0"
 
 [[constraint]]
   name = "gopkg.in/guregu/null.v3"
