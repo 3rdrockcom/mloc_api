@@ -12,7 +12,11 @@ import (
 // GetCustomerKey retrieves an API key from the database
 func (co Controllers) GetCustomerKey(c echo.Context) (err error) {
 	// Get program ID
-	programID := 1
+	programID, err := strconv.Atoi(c.QueryParam("program_id"))
+	if err != nil {
+		err = API.ErrInvalidProgramID
+		return
+	}
 
 	// Get program customer ID
 	programCustomerID, err := strconv.Atoi(c.QueryParam("customer_id"))
@@ -39,7 +43,11 @@ func (co Controllers) GetCustomerKey(c echo.Context) (err error) {
 // GenerateCustomerKey creates a new customer and API key and stores it in the database
 func (co Controllers) GenerateCustomerKey(c echo.Context) (err error) {
 	// Get program ID
-	programID := 1
+	programID, err := strconv.Atoi(c.QueryParam("program_id"))
+	if err != nil {
+		err = API.ErrInvalidProgramID
+		return
+	}
 
 	// Get program customer ID
 	programCustomerID, err := strconv.Atoi(c.QueryParam("customer_id"))
