@@ -86,7 +86,7 @@ func (l *Loan) AcceptedCustomerAgreement() (err error) {
 		return err
 	}
 
-	_, err = DB.Update(
+	_, err = tx.Update(
 		models.CustomerAgreement{}.TableName(),
 		dbx.Params{"term_and_condition": 1},
 		dbx.HashExp{"fk_customer_id": l.cs.CustomerID},
@@ -142,7 +142,7 @@ func (l *Loan) ProcessCreditLineApplication() (isApproved bool, err error) {
 	}
 
 	// Store results
-	err = DB.Model(&customerCreditLineApplication).Insert(
+	err = tx.Model(&customerCreditLineApplication).Insert(
 		"CustomerID",
 		"CreditLineID",
 		"CreditLineAmount",
@@ -395,7 +395,7 @@ func (l *Loan) ProcessLoanApplication(baseAmount decimal.Decimal) (err error) {
 	}
 
 	// Store results
-	err = DB.Model(&customerLoanApplication).Insert()
+	err = tx.Model(&customerLoanApplication).Insert()
 	if err != nil {
 		tx.Rollback()
 		return
