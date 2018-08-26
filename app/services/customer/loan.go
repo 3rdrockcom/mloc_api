@@ -8,10 +8,12 @@ import (
 
 	"github.com/epointpayment/mloc_api_go/app/helpers"
 	"github.com/epointpayment/mloc_api_go/app/models"
-	EPOINT "github.com/epointpayment/mloc_api_go/app/services/epoint"
 	Notifications "github.com/epointpayment/mloc_api_go/app/services/notifications"
 	Mail "github.com/epointpayment/mloc_api_go/app/services/notifications/mail"
 	SMS "github.com/epointpayment/mloc_api_go/app/services/notifications/sms"
+	"github.com/epointpayment/mloc_api_go/app/services/payments"
+	"github.com/epointpayment/mloc_api_go/app/services/payments/collection"
+	"github.com/epointpayment/mloc_api_go/app/services/payments/disbursement"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/labstack/gommon/log"
@@ -356,37 +358,30 @@ func (l *Loan) ProcessLoanApplication(baseAmount decimal.Decimal) (err error) {
 		customerLoanApplication.ProcessedDate = null.StringFrom(t.Format("2006-01-02 15:04:05"))
 		systemSettingID = 6
 
-		// Initialze epoint service
-		es := new(EPOINT.EpointService)
-		es, err = EPOINT.New()
+		// Initialize payment service
+		ps := payments.New()
 		if err != nil {
 			return
 		}
 
-		// Login to epoint service
-		_, err = es.GetLogin()
-		if err != nil {
-			err = ErrIssuerInvalidUserPassword
-			return
+		// Prepare disbursement request
+		disbursementRequest := disbursement.Request{
+			Method:                  "epoint",
+			Customer:                *customer,
+			CustomerLoanApplication: customerLoanApplication,
+			Description:             "Loan_approved_via_MLOC",
 		}
+		disbursementResponse := disbursement.Response{}
 
-		// Transfer funds from prefund to customer wallet using epoint service
-		fundTransferRequest := EPOINT.FundTransferRequest{
-			Amount:          baseAmount.StringFixed(helpers.DefaultCurrencyPrecision),
-			ClientReference: customerLoanApplication.ReferenceCode.String,
-			Source:          "P",
-			Destination:     strconv.FormatInt(customer.ProgramCustomerID.Int64, 10),
-			Description:     "Loan_approved_via_MLOC",
-			MobileNumber:    customer.MobileNumber.String,
-		}
-		ft := EPOINT.FundTransferResponse{}
-		ft, err = es.GetFundTransfer(fundTransferRequest)
+		// Execute payment disbursement
+		disbursementResponse, err = ps.Disbursement(disbursementRequest)
 		if err != nil {
 			err = ErrIssuerFailedTransfer
 			return
 		}
 
-		customerLoanApplication.EpointTransactionID = null.StringFrom(ft.TransactionID)
+		// Set transaction information
+		customerLoanApplication.EpointTransactionID = null.StringFrom(disbursementResponse.TransactionID)
 	}
 
 	tx, err := DB.Begin()
@@ -463,75 +458,53 @@ func (l *Loan) ProcessLoanPayment(paymentAmount decimal.Decimal) (err error) {
 	if err != nil {
 		return
 	}
-
-	// Initialze epoint service
-	es := new(EPOINT.EpointService)
-	es, err = EPOINT.New()
-	if err != nil {
-		return
-	}
-
-	// Login to epoint service
-	_, err = es.GetLogin()
-	if err != nil {
-		err = ErrIssuerInvalidUserPassword
-		return
-	}
-
-	// Get customer balance information
-	customerBalanceRequest := EPOINT.CustomerBalanceRequest{
-		CustomerID:   int(customer.ProgramCustomerID.Int64),
-		MobileNumber: customer.MobileNumber.String,
-	}
-	cb, err := es.GetCustomerBalance(customerBalanceRequest)
-	if err != nil {
-		err = ErrIssuerUnableToAccessBalance
-		return
-	}
-
-	// Check if there is enough funds available in wallet for payment
-	if paymentAmount.GreaterThan(cb.AvailableBalance) {
-		err = ErrIssuerInsufficientFunds
-		return
-	}
-
 	// Generate reference code
 	refCode := "PL" + "-" + generateRandomKey(5)
 
 	// Determine payment date
 	t := time.Now().UTC()
 
-	// Transfer funds from customer wallet to settlement using epoint service
-	fundTransferRequest := EPOINT.FundTransferRequest{
-		Amount:          paymentAmount.StringFixed(helpers.DefaultCurrencyPrecision),
-		ClientReference: refCode,
-		Source:          strconv.FormatInt(customer.ProgramCustomerID.Int64, 10),
-		Destination:     "S",
-		Description:     "Loan_payment_via_MLOC",
-		MobileNumber:    customer.MobileNumber.String,
+	// Prepare loan payment information
+	pa, _ := paymentAmount.Float64()
+	customerPayment := models.CustomerPayment{
+		CustomerID:    null.IntFrom(int64(customer.ID)),
+		ReferenceCode: null.StringFrom(refCode),
+		PaymentAmount: null.FloatFrom(pa),
+		DatePaid:      null.StringFrom(t.Format("2006-01-02 15:04:05")),
+		PaidBy:        null.StringFrom(strconv.FormatInt(int64(customer.ID), 10)),
 	}
-	ft := EPOINT.FundTransferResponse{}
-	ft, err = es.GetFundTransfer(fundTransferRequest)
+
+	// Initialize payments service
+	ps := payments.New()
+	if err != nil {
+		return
+	}
+
+	// Prepare collection request
+	collectionRequest := collection.Request{
+		Method:          "epoint",
+		Customer:        *customer,
+		CustomerPayment: customerPayment,
+		Description:     "Loan_approved_via_MLOC",
+	}
+	collectionResponse := collection.Response{}
+
+	// Execute payment collection
+	collectionResponse, err = ps.Collection(collectionRequest)
 	if err != nil {
 		err = ErrIssuerFailedTransfer
 		return
 	}
+
+	// Set transaction information
+	customerPayment.EpointTransactionID = null.StringFrom(collectionResponse.TransactionID)
 
 	tx, err := DB.Begin()
 	if err != nil {
 		return
 	}
 
-	// Prepare loan payment information
-	pa, _ := paymentAmount.Float64()
-	customerPayment := models.CustomerPayment{
-		CustomerID:          null.IntFrom(int64(customer.ID)),
-		ReferenceCode:       null.StringFrom(refCode),
-		PaymentAmount:       null.FloatFrom(pa),
-		DatePaid:            null.StringFrom(t.Format("2006-01-02 15:04:05")),
-		PaidBy:              null.StringFrom(strconv.FormatInt(int64(customer.ID), 10)),
-		EpointTransactionID: null.StringFrom(ft.TransactionID),
-	}
+	// Store loan payment information
 	err = tx.Model(&customerPayment).Insert()
 	if err != nil {
 		tx.Rollback()
