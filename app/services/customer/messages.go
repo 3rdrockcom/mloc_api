@@ -12,4 +12,7 @@ var (
 
 	// MsgCustomerAppliedForLoan is given when a customer successfully completes a loan application
 	MsgCustomerAppliedForLoan = "Customer successfully applied for a loan"
+
+	// MsgCustomerMadeLoanPayment is given when a customer successfully makes a loan payment
+	MsgCustomerMadeLoanPayment = "Customer successfully made a loan payment"
 )

@@ -660,6 +660,6 @@ func (co *Controllers) PostPayLoan(c echo.Context) error {
 	}
 
 	// Send response
-	msg := Customer.MsgCustomerAppliedForLoan
+	msg := Customer.MsgCustomerMadeLoanPayment
 	return SendOKResponse(c, msg)
 }
