@@ -11,6 +11,8 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/config"
 
 	httpclient "github.com/ddliu/go-httpclient"
+	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/shopspring/decimal"
 )
 
@@ -25,22 +27,41 @@ const (
 	endpointMerchantLogout          = "account_logout"
 )
 
-// cfg caches the config
-var cfg config.Epoint
-
 // EpointService is a service that manages the Epoint Payment API
 type EpointService struct {
+	cfg       Config
 	sessionID string
 }
 
+// Config contains information required for client
+type Config struct {
+	BaseURL  string
+	MTID     int64
+	Username string
+	Password string
+}
+
+// Validate checks if the configuration is invalid
+func (m Config) Validate() (err error) {
+	return validation.ValidateStruct(&m,
+		validation.Field(&m.BaseURL, validation.Required, is.URL),
+		validation.Field(&m.MTID, validation.Required, validation.Min(0)),
+		validation.Field(&m.Username, validation.Required),
+		validation.Field(&m.Password, validation.Required),
+	)
+}
+
 // New creates an instance of the epoint service
-func New() (e *EpointService, err error) {
-	// Initialize config
-	if cfg == (config.Epoint{}) {
-		cfg = config.Get().Epoint
+func New(cfg Config) (e *EpointService, err error) {
+	// Validate config
+	err = cfg.Validate()
+	if err != nil {
+		return
 	}
 
-	e = &EpointService{}
+	e = &EpointService{
+		cfg: cfg,
+	}
 	return
 }
 
@@ -76,9 +97,9 @@ func (e *EpointService) GetLogin() (res LoginResponseMessage, err error) {
 
 	// Make request
 	resp, err := httpclient.Get(u.String(), map[string]string{
-		"P01": strconv.Itoa(int(cfg.MTID)),
-		"P02": cfg.Username,
-		"P03": cfg.Password,
+		"P01": strconv.Itoa(int(e.cfg.MTID)),
+		"P02": e.cfg.Username,
+		"P03": e.cfg.Password,
 	})
 	if err != nil {
 		return
@@ -329,7 +350,7 @@ func (e *EpointService) GetLogout() (res SuccessResponseMessage, err error) {
 // generateURL generates an api endpoint url
 func (e *EpointService) generateURL(resource string, endpoint string) (u *url.URL, err error) {
 	// Parse api base url
-	u, err = url.ParseRequestURI(cfg.BaseURL)
+	u, err = url.ParseRequestURI(e.cfg.BaseURL)
 	if err != nil {
 		return
 	}

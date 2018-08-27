@@ -3,6 +3,7 @@ package epoint
 import (
 	"strconv"
 
+	"github.com/epointpayment/mloc_api_go/app/config"
 	"github.com/epointpayment/mloc_api_go/app/helpers"
 	EPOINT "github.com/epointpayment/mloc_api_go/app/services/payments/client/epoint"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/collection"
@@ -12,16 +13,26 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// Driver manages the adapter for client
 type Driver struct{}
 
+// New creates a new instance of the client adapter
 func New() (*Driver, error) {
 	return &Driver{}, nil
 }
 
+// Disbursement is pay out of funds (loan proceeds) to the borrower
 func (d *Driver) Disbursement(req disbursement.Request) (res disbursement.Response, err error) {
+	// Get config for epoint service
+	cfg, err := d.getConfig()
+	if err != nil {
+		err = driver.ErrIssuerInvalidConfig
+		return
+	}
+
 	// Initialize epoint service
 	es := new(EPOINT.EpointService)
-	es, err = EPOINT.New()
+	es, err = EPOINT.New(cfg)
 	if err != nil {
 		return
 	}
@@ -58,10 +69,18 @@ func (d *Driver) Disbursement(req disbursement.Request) (res disbursement.Respon
 	return
 }
 
+// Collection is pay out of funds (loan proceeds) to the lender
 func (d *Driver) Collection(req collection.Request) (res collection.Response, err error) {
+	// Get config for epoint service
+	cfg, err := d.getConfig()
+	if err != nil {
+		err = driver.ErrIssuerInvalidConfig
+		return
+	}
+
 	// Initialize epoint service
 	es := new(EPOINT.EpointService)
-	es, err = EPOINT.New()
+	es, err = EPOINT.New(cfg)
 	if err != nil {
 		return
 	}
@@ -110,6 +129,21 @@ func (d *Driver) Collection(req collection.Request) (res collection.Response, er
 		ClientReference: ft.ClientReference,
 		TransactionID:   ft.TransactionID,
 		Amount:          decimal.NewFromFloat(ft.Amount),
+	}
+
+	return
+}
+
+// getConfig gets the client configuration
+func (d *Driver) getConfig() (c EPOINT.Config, err error) {
+	// Get config for epoint service
+	cfg := config.Get().Epoint
+
+	c = EPOINT.Config{
+		BaseURL:  cfg.BaseURL,
+		MTID:     cfg.MTID,
+		Username: cfg.Username,
+		Password: cfg.Password,
 	}
 
 	return

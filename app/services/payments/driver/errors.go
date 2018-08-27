@@ -5,6 +5,9 @@ import (
 )
 
 var (
+	// ErrIssuerInvalidConfig is given if issue config is invalid
+	ErrIssuerInvalidConfig = errors.New("Invalid issuer config")
+
 	// ErrIssuerInvalidUserPassword is given if it username or password is wrong
 	ErrIssuerInvalidUserPassword = errors.New("Invalid issuer username or password")
 
