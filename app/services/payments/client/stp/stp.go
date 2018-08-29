@@ -4,31 +4,27 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"path"
 	"strconv"
 
-	"github.com/shopspring/decimal"
-
 	httpclient "github.com/ddliu/go-httpclient"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
+	"github.com/shopspring/decimal"
 )
 
 const (
 	// Resources
-	resourceSTP        = "stp"
-	resourceSTPGateway = "stpgw"
+	resourceInstitutions = "stp/institutions.php"
+	resourceWebServices  = "stpgw/webservices.php"
 
 	// Endpoints
-	endpointInstitutions = "institutions.php"
-	endpointWebServices  = "webservices.php"
-
-	// Methods
-	methodGenerateCLABE = "get_clabe"
-	methodValidateCLABE = "validate_clabe"
-	methodSTPOut        = "stp_out"
+	endpointGenerateCLABE = "get_clabe"
+	endpointValidateCLABE = "validate_clabe"
+	endpointSTPOut        = "stp_out"
 )
 
 // Client is a service that manages the STP Payment API
@@ -84,12 +80,12 @@ type ErrorResponseMessage struct {
 	Message string `json:"message"`
 }
 
-// GenerateCLABERequest contains request information for generate CLABE
+// GenerateCLABERequest contains request information for generating CLABE
 type GenerateCLABERequest struct {
 	ClientReference string
 }
 
-// GenerateCLABEResponseMessage contains response information for a generate CLABE message
+// GenerateCLABEResponseMessage contains response information for generating CLABE message
 type GenerateCLABEResponseMessage struct {
 	CLABE string `json:"ClabeNo"`
 }
@@ -102,19 +98,16 @@ type GenerateCLABEResponse struct {
 // GenerateCLABE generates a CLABE number
 func (c *Client) GenerateCLABE(req GenerateCLABERequest) (res GenerateCLABEResponse, err error) {
 	// Generate a valid url
-	u, err := c.generateURL(resourceSTPGateway, endpointWebServices)
+	u, err := c.generateURL(resourceWebServices)
 	if err != nil {
 		return
 	}
 
-	var bodyBytes []byte
-
 	// Make request
-	resp := new(httpclient.Response)
-	resp, err = httpclient.
-		WithHeader("Authorization", "Basic "+basicAuth(c.cfg.Username, c.cfg.Password)).
+	resp, err := httpclient.
+		WithHeader("Authorization", generateBasicAuthHeader(c.cfg.Username, c.cfg.Password)).
 		Post(u.String(), map[string]string{
-			"method":  methodGenerateCLABE,
+			"method":  endpointGenerateCLABE,
 			"prog_id": strconv.FormatInt(c.cfg.ProgramID, 10),
 			"ref_no":  req.ClientReference,
 		})
@@ -123,7 +116,7 @@ func (c *Client) GenerateCLABE(req GenerateCLABERequest) (res GenerateCLABERespo
 	}
 
 	// Read response
-	bodyBytes, err = ioutil.ReadAll(resp.Body)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		return
@@ -156,12 +149,12 @@ func (c *Client) GenerateCLABE(req GenerateCLABERequest) (res GenerateCLABERespo
 	return
 }
 
-// ValidateCLABERequest contains request information for validate CLABE
+// ValidateCLABERequest contains request information for validating CLABE
 type ValidateCLABERequest struct {
 	CLABE string
 }
 
-// ValidateCLABEResponseMessage contains response information for validate CLABE message
+// ValidateCLABEResponseMessage contains response information for validating CLABE message
 type ValidateCLABEResponseMessage struct {
 	CLABE           string      `json:"ClabeNo"`
 	ProgramID       json.Number `json:"ProgID"`
@@ -178,19 +171,16 @@ type ValidateCLABEResponse struct {
 // ValidateCLABE validates a CLABE number
 func (c *Client) ValidateCLABE(req ValidateCLABERequest) (res ValidateCLABEResponse, err error) {
 	// Generate a valid url
-	u, err := c.generateURL(resourceSTPGateway, endpointWebServices)
+	u, err := c.generateURL(resourceWebServices)
 	if err != nil {
 		return
 	}
 
-	var bodyBytes []byte
-
 	// Make request
-	resp := new(httpclient.Response)
-	resp, err = httpclient.
-		WithHeader("Authorization", "Basic "+basicAuth(c.cfg.Username, c.cfg.Password)).
+	resp, err := httpclient.
+		WithHeader("Authorization", generateBasicAuthHeader(c.cfg.Username, c.cfg.Password)).
 		Post(u.String(), map[string]string{
-			"method":   methodValidateCLABE,
+			"method":   endpointValidateCLABE,
 			"clabe_no": req.CLABE,
 		})
 	if err != nil {
@@ -198,7 +188,7 @@ func (c *Client) ValidateCLABE(req ValidateCLABERequest) (res ValidateCLABERespo
 	}
 
 	// Read response
-	bodyBytes, err = ioutil.ReadAll(resp.Body)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		return
@@ -253,23 +243,20 @@ type GetInstitutionsResponse struct {
 // GetInstitutions gets a list of banking institutions for STP
 func (c *Client) GetInstitutions() (res GetInstitutionsResponse, err error) {
 	// Generate a valid url
-	u, err := c.generateURL(resourceSTP, endpointInstitutions)
+	u, err := c.generateURL(resourceInstitutions)
 	if err != nil {
 		return
 	}
 
-	var bodyBytes []byte
-
 	// Make request
-	resp := new(httpclient.Response)
-	resp, err = httpclient.
+	resp, err := httpclient.
 		Get(u.String())
 	if err != nil {
 		return
 	}
 
 	// Read response
-	bodyBytes, err = ioutil.ReadAll(resp.Body)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		return
@@ -331,19 +318,16 @@ type FundTransferOutboundResponse struct {
 // STPOut performs a STP disbursement
 func (c *Client) STPOut(req FundTransferOutboundRequest) (res FundTransferOutboundResponse, err error) {
 	// Generate a valid url
-	u, err := c.generateURL(resourceSTPGateway, endpointWebServices)
+	u, err := c.generateURL(resourceWebServices)
 	if err != nil {
 		return
 	}
 
-	var bodyBytes []byte
-
 	// Make request
-	resp := new(httpclient.Response)
-	resp, err = httpclient.
-		WithHeader("Authorization", "Basic "+basicAuth(c.cfg.Username, c.cfg.Password)).
+	resp, err := httpclient.
+		WithHeader("Authorization", generateBasicAuthHeader(c.cfg.Username, c.cfg.Password)).
 		Post(u.String(), map[string]string{
-			"method":      methodSTPOut,
+			"method":      endpointSTPOut,
 			"amount":      req.Amount.String(),
 			"bene_acct":   req.Account,
 			"bene_email":  req.Email,
@@ -355,7 +339,7 @@ func (c *Client) STPOut(req FundTransferOutboundRequest) (res FundTransferOutbou
 	}
 
 	// Read response
-	bodyBytes, err = ioutil.ReadAll(resp.Body)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		return
@@ -388,8 +372,8 @@ func (c *Client) STPOut(req FundTransferOutboundRequest) (res FundTransferOutbou
 	return
 }
 
-// generateURL generates an api endpoint url
-func (c *Client) generateURL(resource string, endpoint string) (u *url.URL, err error) {
+// generateURL generates an api resource url
+func (c *Client) generateURL(resource string) (u *url.URL, err error) {
 	// Parse api base url
 	u, err = url.ParseRequestURI(c.cfg.BaseURL)
 	if err != nil {
@@ -397,12 +381,12 @@ func (c *Client) generateURL(resource string, endpoint string) (u *url.URL, err 
 	}
 
 	// Merge url components
-	u.Path = path.Join(u.Path, resource, endpoint)
+	u.Path = path.Join(u.Path, resource)
 	return
 }
 
-// basicAuth encodes the username and password pair for basic auth
-func basicAuth(username, password string) string {
-	auth := username + ":" + password
-	return base64.StdEncoding.EncodeToString([]byte(auth))
+// generateBasicAuthHeader encodes the username and password pair for basic auth
+func generateBasicAuthHeader(username, password string) (auth string) {
+	auth = base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+	return fmt.Sprintf("Basic %s", auth)
 }
