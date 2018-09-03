@@ -16,6 +16,7 @@ type Configuration struct {
 	Mail        Mail
 	SMS         SMS
 	Epoint      Epoint
+	STP         STP
 }
 
 // Application contains application information
@@ -73,6 +74,13 @@ type Epoint struct {
 	Password string
 }
 
+// STP contains epoint merchant api information
+type STP struct {
+	BaseURL  string
+	Username string
+	Password string
+}
+
 // cfg contains the processed configuration values
 var cfg Configuration
 
@@ -121,6 +129,11 @@ func New() (Configuration, error) {
 	cfg.Epoint.MTID, _ = strconv.ParseInt(envy.Get("EPOINT_MTID", ""), 10, 64)
 	cfg.Epoint.Username, _ = envy.MustGet("EPOINT_USERNAME")
 	cfg.Epoint.Password, _ = envy.MustGet("EPOINT_PASSWORD")
+
+	// STP
+	cfg.STP.BaseURL, _ = envy.MustGet("STP_API")
+	cfg.STP.Username, _ = envy.MustGet("STP_USERNAME")
+	cfg.STP.Password, _ = envy.MustGet("STP_PASSWORD")
 
 	// For development only
 	if IsDev() {

@@ -13,7 +13,6 @@ import (
 	httpclient "github.com/ddliu/go-httpclient"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
-	"github.com/shopspring/decimal"
 )
 
 const (
@@ -298,7 +297,7 @@ func (c *Client) GetInstitutions() (res GetInstitutionsResponse, err error) {
 
 // FundTransferOutboundRequest contains request information for STP disbursement
 type FundTransferOutboundRequest struct {
-	Amount      decimal.Decimal
+	Amount      string
 	Account     string
 	Email       string
 	Source      int64
@@ -328,7 +327,7 @@ func (c *Client) STPOut(req FundTransferOutboundRequest) (res FundTransferOutbou
 		WithHeader("Authorization", generateBasicAuthHeader(c.cfg.Username, c.cfg.Password)).
 		Post(u.String(), map[string]string{
 			"method":      endpointSTPOut,
-			"amount":      req.Amount.String(),
+			"amount":      req.Amount,
 			"bene_acct":   req.Account,
 			"bene_email":  req.Email,
 			"operante":    strconv.FormatInt(req.Source, 10),
