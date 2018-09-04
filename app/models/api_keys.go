@@ -10,6 +10,7 @@ type APIKey struct {
 	ID          int
 	CustomerID  *int `db:"fk_customer_id"`
 	Key         string
+	Level       int
 	DateCreated time.Time
 }
 
