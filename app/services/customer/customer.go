@@ -10,10 +10,11 @@ var DB *dbx.DB
 
 // CustomerService is a service that manages a customer
 type CustomerService struct {
-	CustomerID int
-	info       *Info
-	loan       *Loan
-	settings   *Settings
+	CustomerID  int
+	info        *Info
+	loan        *Loan
+	bankAccount *BankAccount
+	settings    *Settings
 }
 
 // Validate checks if the values in the struct are valid
@@ -40,6 +41,10 @@ func New(customerID int) (cs *CustomerService, err error) {
 		cs: cs,
 	}
 
+	cs.bankAccount = &BankAccount{
+		cs: cs,
+	}
+
 	cs.settings = &Settings{
 		cs: cs,
 	}
@@ -55,6 +60,11 @@ func (cs *CustomerService) Info() *Info {
 // Loan gets customer loan methods
 func (cs *CustomerService) Loan() *Loan {
 	return cs.loan
+}
+
+// BankAccount gets customer bank account methods
+func (cs *CustomerService) BankAccount() *BankAccount {
+	return cs.bankAccount
 }
 
 // Settings gets customer setting methods

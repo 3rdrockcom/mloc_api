@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -662,4 +663,229 @@ func (co *Controllers) PostPayLoan(c echo.Context) error {
 	// Send response
 	msg := Customer.MsgCustomerMadeLoanPayment
 	return SendOKResponse(c, msg)
+}
+
+// GetBankAccount gets information about a customer's bank account(s)
+func (co *Controllers) GetBankAccount(c echo.Context) (err error) {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	// Get bank account id
+	queryBankAccountID := c.QueryParam("R2")
+	bankAccountID, err := strconv.Atoi(queryBankAccountID)
+	if err != nil && queryBankAccountID != "" {
+		err = Customer.ErrInvalidBankAccountID
+		return
+	}
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	// Get bank account
+	if bankAccountID > 0 {
+		bankAccount, err := sc.BankAccount().Get(bankAccountID)
+		if err != nil {
+			return err
+		}
+
+		bankAccount.DateCreatedDisplay = bankAccount.DateCreated.Format("2006-01-02 15:04:05")
+
+		if !bankAccount.DateUpdated.IsZero() {
+			bankAccount.DateUpdatedDisplay = bankAccount.DateUpdated.Format("2006-01-02 15:04:05")
+		}
+
+		// Send response
+		return SendResponse(c, http.StatusOK, bankAccount)
+	}
+
+	// Get list of bank accounts
+	bankAccounts, err := sc.BankAccount().GetAll()
+	if err != nil {
+		return err
+	}
+
+	for i := range bankAccounts {
+		bankAccounts[i].DateCreatedDisplay = bankAccounts[i].DateCreated.Format("2006-01-02 15:04:05")
+		if !bankAccounts[i].DateUpdated.IsZero() {
+			bankAccounts[i].DateUpdatedDisplay = bankAccounts[i].DateUpdated.Format("2006-01-02 15:04:05")
+		}
+
+	}
+
+	// Send response
+	return SendResponse(c, http.StatusOK, bankAccounts)
+}
+
+// PostCreateBankAccountRequest contains information about a bank account creation request
+type PostCreateBankAccountRequest struct {
+	Alias         null.String `form:"R2" json:"R2"`
+	AccountNumber null.String `form:"R3" json:"R3"`
+}
+
+// Validate checks postform required is validation
+func (r PostCreateBankAccountRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		// validation.Field(&r.Alias, validation.Required),
+		validation.Field(&r.AccountNumber, validation.Required),
+	)
+}
+
+// PostCreateBankAccount creates a bank account for a customer
+func (co *Controllers) PostCreateBankAccount(c echo.Context) (err error) {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	r := PostCreateBankAccountRequest{}
+
+	// Bind data to struct
+	if err = c.Bind(&r); err != nil {
+		err = Customer.ErrInvalidBankAccountInformation
+		return err
+	}
+
+	// Validate struct
+	if err = r.Validate(); err != nil {
+		err = Customer.ErrInvalidBankAccountInformation
+		return err
+	}
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	// Create bank account
+	bankAccount := models.CustomerBankAccount{
+		Alias:         r.Alias.String,
+		AccountNumber: r.AccountNumber.String,
+	}
+	err = sc.BankAccount().Create(&bankAccount)
+	if err != nil {
+		return err
+	}
+
+	bankAccount.DateCreatedDisplay = bankAccount.DateCreated.Format("2006-01-02 15:04:05")
+
+	// Send response
+	return SendResponse(c, http.StatusOK, bankAccount)
+}
+
+// PostUpdateBankAccountRequest contains information about a bank account update request
+type PostUpdateBankAccountRequest struct {
+	BankAccountID null.Int    `form:"R2" json:"R2"`
+	Alias         null.String `form:"R3" json:"R3"`
+}
+
+// Validate checks postform required is validation
+func (r PostUpdateBankAccountRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.BankAccountID, validation.Required, validation.Min(0)),
+		validation.Field(&r.Alias, validation.Required),
+	)
+}
+
+// PostUpdateBankAccount updates a customer's bank account information
+func (co *Controllers) PostUpdateBankAccount(c echo.Context) (err error) {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	r := PostUpdateBankAccountRequest{}
+
+	// Bind data to struct
+	if err = c.Bind(&r); err != nil {
+		err = Customer.ErrInvalidBankAccountInformation
+		return err
+	}
+
+	// Validate struct
+	if err = r.Validate(); err != nil {
+		err = Customer.ErrInvalidBankAccountInformation
+		return err
+	}
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	// Get bank account
+	bankAccountID := int(r.BankAccountID.Int64)
+	bankAccount, err := sc.BankAccount().Get(bankAccountID)
+	if err != nil {
+		return err
+	}
+
+	// Prepare data
+	bankAccount.Alias = r.Alias.String
+
+	// Update bank account
+	err = sc.BankAccount().Update(bankAccount)
+	if err != nil {
+		return
+	}
+
+	bankAccount.DateCreatedDisplay = bankAccount.DateCreated.Format("2006-01-02 15:04:05")
+	bankAccount.DateUpdatedDisplay = bankAccount.DateUpdated.Format("2006-01-02 15:04:05")
+
+	// Send response
+	return SendOKResponse(c, Customer.MsgCustomerUpdatedCustomerBankAccount)
+}
+
+// PostDeleteBankAccountRequest contains information about a bank account deletion request
+type PostDeleteBankAccountRequest struct {
+	BankAccountID null.Int `form:"R2" json:"R2"`
+}
+
+// Validate checks postform required is validation
+func (r PostDeleteBankAccountRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.BankAccountID, validation.Required, validation.Min(0)),
+	)
+}
+
+// PostDeleteBankAccount deletes a customer's bank account
+func (co *Controllers) PostDeleteBankAccount(c echo.Context) (err error) {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	r := PostDeleteBankAccountRequest{}
+
+	// Bind data to struct
+	if err = c.Bind(&r); err != nil {
+		err = Customer.ErrInvalidBankAccountInformation
+		return err
+	}
+
+	// Validate struct
+	if err = r.Validate(); err != nil {
+		err = Customer.ErrInvalidBankAccountInformation
+		return err
+	}
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	// Get bank account
+	bankAccountID := int(r.BankAccountID.Int64)
+	bankAccount, err := sc.BankAccount().Get(bankAccountID)
+	if err != nil {
+		return err
+	}
+
+	//
+	err = sc.BankAccount().Delete(bankAccount)
+	if err != nil {
+		return err
+	}
+
+	// Send response
+	return SendOKResponse(c, Customer.MsgCustomerDeletedCustomerBankAccount)
 }

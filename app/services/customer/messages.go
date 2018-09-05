@@ -15,4 +15,10 @@ var (
 
 	// MsgCustomerMadeLoanPayment is given when a customer successfully makes a loan payment
 	MsgCustomerMadeLoanPayment = "Customer successfully made a loan payment"
+
+	// MsgCustomerUpdatedCustomerBankAccount is given when the customer updates a bank account
+	MsgCustomerUpdatedCustomerBankAccount = "Bank account has successfully been updated"
+
+	// MsgCustomerDeletedCustomerBankAccount is given when the customer deletes a bank account
+	MsgCustomerDeletedCustomerBankAccount = "Bank account has successfully been deleted"
 )

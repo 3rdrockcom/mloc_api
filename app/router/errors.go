@@ -62,6 +62,12 @@ func (r *Router) appendErrorHandler() {
 			Customer.ErrInvalidNextPayDate.Error(),
 			Customer.ErrInvalidFollowingPayDate.Error():
 			code = http.StatusBadRequest
+		case Customer.ErrBankAccountNotFound.Error():
+			code = http.StatusNotFound
+		case Customer.ErrInvalidBankAccountID.Error():
+			code = http.StatusBadRequest
+		case Customer.ErrInvalidBankAccountInformation.Error():
+			code = http.StatusBadRequest
 
 		// Issuer / Epoint Service
 		case Customer.ErrIssuerInvalidUserPassword.Error():

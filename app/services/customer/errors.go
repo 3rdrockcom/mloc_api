@@ -57,6 +57,15 @@ var (
 	// ErrCustomerIncompleteInfo is given if customerinformation is not complete
 	ErrCustomerIncompleteInfo = errors.New("Please provide complete customer information")
 
+	// ErrInvalidBankAccountID is an error shown when th customer bank account is not a valid
+	ErrInvalidBankAccountID = errors.New("Invalid Customer Bank Account ID")
+
+	// ErrBankAccountNotFound is an error given for a non-existent bank account
+	ErrBankAccountNotFound = errors.New("No bank account(s) were found")
+
+	// ErrInvalidBankAccountInformation is an error shown when the customer submits invalid banking information
+	ErrInvalidBankAccountInformation = errors.New("Invalid Customer Bank Account Information")
+
 	// ErrProblemOccured is given if it can't get data from database or can't covert input to string
 	ErrProblemOccured = errors.New("Some problems occurred, please try again")
 )
