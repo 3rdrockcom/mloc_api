@@ -99,6 +99,17 @@ func (s *PaymentsService) Collection(req collection.Request) (res collection.Res
 		if err != nil {
 			return res, err
 		}
+
+	case MethodSTP:
+		var driver *stp.Driver
+		driver, err = stp.New()
+		if err != nil {
+			return
+		}
+		res, err = driver.Collection(req)
+		if err != nil {
+			return res, err
+		}
 	default:
 		err = ErrInvalidPayloadType
 		return
