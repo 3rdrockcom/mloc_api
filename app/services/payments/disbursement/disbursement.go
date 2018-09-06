@@ -9,6 +9,7 @@ import (
 type Request struct {
 	Method                  string
 	Customer                models.CustomerInfo
+	CustomerBankAccount     models.CustomerBankAccount
 	CustomerLoanApplication models.CustomerLoanApplication
 	Description             string
 }

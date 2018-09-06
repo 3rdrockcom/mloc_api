@@ -1,6 +1,8 @@
 package stp
 
 import (
+	"strconv"
+
 	"github.com/epointpayment/mloc_api_go/app/config"
 	"github.com/epointpayment/mloc_api_go/app/helpers"
 	STP "github.com/epointpayment/mloc_api_go/app/services/payments/client/stp"
@@ -68,13 +70,20 @@ func (d *Driver) Disbursement(req disbursement.Request) (res disbursement.Respon
 		return
 	}
 
+	bankCode, err := strconv.Atoi(req.CustomerBankAccount.BankCode)
+	if err != nil {
+		return
+	}
+
 	// Transfer funds from STP to bank account
 	fundTransferRequest := STP.FundTransferOutboundRequest{
-		Amount:      decimal.NewFromFloat(req.CustomerLoanApplication.LoanAmount.Float64).StringFixed(helpers.DefaultCurrencyPrecision),
-		Account:     "846180000400000001",
-		Email:       req.Customer.Email.String,
-		Source:      90646,
-		Destination: 846,
+		Amount: decimal.NewFromFloat(req.CustomerLoanApplication.LoanAmount.Float64).StringFixed(helpers.DefaultCurrencyPrecision),
+		// Account:     "846180000400000001",
+		Account: req.CustomerBankAccount.AccountNumber,
+		Email:   req.Customer.Email.String,
+		Source:  90646,
+		// Destination: 846,
+		Destination: int64(bankCode),
 	}
 	ft, err := client.STPOut(fundTransferRequest)
 	if err != nil {

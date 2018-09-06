@@ -6,6 +6,7 @@ type CustomerBankAccount struct {
 	ID            int       `json:"id"`
 	CustomerID    int       `json:"-"`
 	Alias         string    `json:"alias"`
+	BankCode      string    `json:"bank_code"`
 	AccountNumber string    `json:"account_number"`
 	DateCreated   time.Time `json:"-"`
 	DateUpdated   time.Time `json:"-"`

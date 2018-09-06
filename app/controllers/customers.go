@@ -603,6 +603,7 @@ func (co *Controllers) PostComputeLoan(c echo.Context) error {
 // PostLoanApplicationRequest contains information for a loan application
 type PostLoanApplicationRequest struct {
 	DisbursementMethod null.String `form:"R3" json:"R3"`
+	BankAccountID      null.Int    `form:"R4" json:"R4"`
 	LoanAmount         null.String `form:"R2" json:"R2"`
 }
 
@@ -639,12 +640,16 @@ func (co *Controllers) PostLoanApplication(c echo.Context) error {
 		return err
 	}
 
+	// Get disbursement information
+	disbursementMethod := lar.DisbursementMethod.String
+	disbursementBankAccount := int(lar.BankAccountID.Int64)
+
 	// Convert loan amount to decimal
 	loanAmount, _ := decimal.NewFromString(lar.LoanAmount.String)
 	loanAmount = loanAmount.RoundBank(helpers.DefaultCurrencyPrecision)
 
 	// Calculate loan application
-	err = sc.Loan().ProcessLoanApplication(lar.DisbursementMethod.String, loanAmount)
+	err = sc.Loan().ProcessLoanApplication(disbursementMethod, disbursementBankAccount, loanAmount)
 	if err != nil {
 		return err
 	}
@@ -764,6 +769,7 @@ func (co *Controllers) GetBankAccount(c echo.Context) (err error) {
 type PostCreateBankAccountRequest struct {
 	Alias         null.String `form:"R2" json:"R2"`
 	AccountNumber null.String `form:"R3" json:"R3"`
+	BankCode      null.String `form:"R4" json:"R4"`
 }
 
 // Validate checks postform required is validation
@@ -803,6 +809,7 @@ func (co *Controllers) PostCreateBankAccount(c echo.Context) (err error) {
 	bankAccount := models.CustomerBankAccount{
 		Alias:         r.Alias.String,
 		AccountNumber: r.AccountNumber.String,
+		BankCode:      r.BankCode.String,
 	}
 	err = sc.BankAccount().Create(&bankAccount)
 	if err != nil {

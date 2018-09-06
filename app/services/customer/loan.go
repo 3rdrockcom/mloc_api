@@ -298,7 +298,7 @@ func (l *Loan) ComputeLoanApplication(baseAmount decimal.Decimal) (computed Comp
 }
 
 // ProcessLoanApplication processes a loan application
-func (l *Loan) ProcessLoanApplication(method string, baseAmount decimal.Decimal) (err error) {
+func (l *Loan) ProcessLoanApplication(method string, bankAccountID int, baseAmount decimal.Decimal) (err error) {
 	// Get detailed customer information
 	customer, err := l.cs.Info().GetDetails()
 	if err != nil {
@@ -358,6 +358,16 @@ func (l *Loan) ProcessLoanApplication(method string, baseAmount decimal.Decimal)
 		customerLoanApplication.ProcessedDate = null.StringFrom(t.Format("2006-01-02 15:04:05"))
 		systemSettingID = 6
 
+		// Get bank account
+		customerBankAccount := new(models.CustomerBankAccount)
+
+		if bankAccountID > 0 {
+			customerBankAccount, err = l.cs.BankAccount().Get(bankAccountID)
+			if err != nil {
+				return
+			}
+		}
+
 		// Initialize payment service
 		ps := payments.New()
 		if err != nil {
@@ -368,6 +378,7 @@ func (l *Loan) ProcessLoanApplication(method string, baseAmount decimal.Decimal)
 		disbursementRequest := disbursement.Request{
 			Method:                  method,
 			Customer:                *customer,
+			CustomerBankAccount:     *customerBankAccount,
 			CustomerLoanApplication: customerLoanApplication,
 			Description:             "Loan_approved_via_MLOC",
 		}
