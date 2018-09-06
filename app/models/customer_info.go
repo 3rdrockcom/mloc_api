@@ -44,6 +44,7 @@ type CustomerInfo struct {
 	CreditLineID          null.Int    `json:"-"`
 	ProgramCustomerID     null.Int    `json:"-"`
 	ProgramCustomerMobile null.String `json:"-"`
+	CLABE                 null.String `db:"CLABE" json:"CLABE"`
 
 	NetPayPerCheckDisplay  null.String `db:"-" json:"net_pay_percheck"`
 	CreditLimitDisplay     null.String `db:"-" json:"credit_limit"`

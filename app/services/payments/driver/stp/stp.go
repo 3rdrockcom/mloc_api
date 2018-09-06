@@ -7,6 +7,7 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/services/payments/collection"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/disbursement"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/driver"
+	"github.com/epointpayment/mloc_api_go/app/services/payments/registration"
 
 	"github.com/shopspring/decimal"
 )
@@ -19,14 +20,46 @@ func New() (*Driver, error) {
 	return &Driver{}, nil
 }
 
-// Disbursement is pay out of funds (loan proceeds) to the borrower
-func (d *Driver) Disbursement(req disbursement.Request) (res disbursement.Response, err error) {
-	// Get config for epoint service
+func (d *Driver) Register(req registration.Request) (res registration.Response, err error) {
+	// Get config for stp service
 	cfg, err := d.getConfig()
 	if err != nil {
 		err = driver.ErrIssuerInvalidConfig
 		return
 	}
+	cfg.ProgramID = req.Customer.ProgramCustomerID.Int64
+
+	// Initialize stp service
+	client := new(STP.Client)
+	client, err = STP.New(cfg)
+	if err != nil {
+		return
+	}
+
+	// Generate CLABE
+	reg, err := client.GenerateCLABE(STP.GenerateCLABERequest{
+		ClientReference: req.Customer.CustUniqueID.String,
+	})
+	if err != nil {
+		return
+	}
+
+	res = registration.Response{
+		Identifier: reg.CLABE,
+	}
+
+	return
+}
+
+// Disbursement is pay out of funds (loan proceeds) to the borrower
+func (d *Driver) Disbursement(req disbursement.Request) (res disbursement.Response, err error) {
+	// Get config for stp service
+	cfg, err := d.getConfig()
+	if err != nil {
+		err = driver.ErrIssuerInvalidConfig
+		return
+	}
+	cfg.ProgramID = req.Customer.ProgramCustomerID.Int64
 
 	// Initialize stp service
 	client := new(STP.Client)

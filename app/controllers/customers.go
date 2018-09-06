@@ -10,6 +10,8 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/helpers"
 	"github.com/epointpayment/mloc_api_go/app/models"
 	Customer "github.com/epointpayment/mloc_api_go/app/services/customer"
+	"github.com/epointpayment/mloc_api_go/app/services/payments"
+	"github.com/epointpayment/mloc_api_go/app/services/payments/registration"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
@@ -457,6 +459,43 @@ func (co *Controllers) PostAcceptTermsAndConditions(c echo.Context) error {
 	err = sc.Loan().AcceptedCustomerAgreement()
 	if err != nil {
 		return err
+	}
+
+	// Get detailed customer information
+	customerInfo, err := sc.Info().GetDetails()
+	if err != nil {
+		return err
+	}
+
+	// Register identifiers
+	// Initialize payment service
+	ps := payments.New()
+	if err != nil {
+		return err
+	}
+
+	if customerInfo.CLABE.String == "" {
+
+		// Prepare registration request
+		registrationRequest := registration.Request{
+			Method:   payments.MethodSTP,
+			Customer: *customerInfo,
+		}
+
+		// Execute payment registration
+		registrationResponse, err := ps.Register(registrationRequest)
+		if err != nil {
+			// err = ErrIssuerFailedTransfer
+			return err
+		}
+
+		customerBasic := new(models.CustomerBasic)
+		customerBasic.CLABE = null.NewString(registrationResponse.Identifier, true)
+
+		err = sc.Info().UpdateCustomerBasic(customerBasic, "CLABE")
+		if err != nil {
+			return err
+		}
 	}
 
 	// Send response

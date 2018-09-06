@@ -19,6 +19,7 @@ type CustomerBasic struct {
 	HomeNumber   null.String `db:"home_number"`
 	MobileNumber null.String `db:"mobile_number"`
 	Email        null.String `db:"email"`
+	CLABE        null.String `db:"CLABE"`
 }
 
 // TableName gets customerbasicinfo table from database

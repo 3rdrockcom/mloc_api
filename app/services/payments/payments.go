@@ -4,6 +4,8 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/services/payments/collection"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/disbursement"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/driver/epoint"
+	"github.com/epointpayment/mloc_api_go/app/services/payments/driver/stp"
+	"github.com/epointpayment/mloc_api_go/app/services/payments/registration"
 )
 
 // PaymentsService is a service that manages payment disbursements and collections
@@ -14,15 +16,35 @@ func New() *PaymentsService {
 	return &PaymentsService{}
 }
 
+func (s *PaymentsService) Register(req registration.Request) (res registration.Response, err error) {
+	switch req.Method {
+	case MethodSTP:
+		var driver *stp.Driver
+		driver, err = stp.New()
+		if err != nil {
+			return
+		}
+		res, err = driver.Register(req)
+		if err != nil {
+			return res, err
+		}
+	default:
+		err = ErrInvalidPayloadType
+		return
+	}
+
+	return
+}
+
 func (s *PaymentsService) Disbursement(req disbursement.Request) (res disbursement.Response, err error) {
 	switch req.Method {
-	case "epoint":
+	case MethodEPOINT:
 		var es *epoint.Driver
 		es, err = epoint.New()
 		if err != nil {
 			return
 		}
-		res, err := es.Disbursement(req)
+		res, err = es.Disbursement(req)
 		if err != nil {
 			return res, err
 		}
@@ -37,13 +59,13 @@ func (s *PaymentsService) Disbursement(req disbursement.Request) (res disburseme
 
 func (s *PaymentsService) Collection(req collection.Request) (res collection.Response, err error) {
 	switch req.Method {
-	case "epoint":
+	case MethodEPOINT:
 		var es *epoint.Driver
 		es, err = epoint.New()
 		if err != nil {
 			return
 		}
-		res, err := es.Collection(req)
+		res, err = es.Collection(req)
 		if err != nil {
 			return res, err
 		}
