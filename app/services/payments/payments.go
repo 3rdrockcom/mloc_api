@@ -69,7 +69,16 @@ func (s *PaymentsService) Disbursement(req disbursement.Request) (res disburseme
 		if err != nil {
 			return res, err
 		}
-
+	case MethodSTP:
+		var driver *stp.Driver
+		driver, err = stp.New()
+		if err != nil {
+			return
+		}
+		res, err = driver.Disbursement(req)
+		if err != nil {
+			return res, err
+		}
 	default:
 		err = ErrInvalidPayloadType
 		return
@@ -90,7 +99,6 @@ func (s *PaymentsService) Collection(req collection.Request) (res collection.Res
 		if err != nil {
 			return res, err
 		}
-
 	default:
 		err = ErrInvalidPayloadType
 		return

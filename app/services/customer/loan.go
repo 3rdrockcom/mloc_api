@@ -298,7 +298,7 @@ func (l *Loan) ComputeLoanApplication(baseAmount decimal.Decimal) (computed Comp
 }
 
 // ProcessLoanApplication processes a loan application
-func (l *Loan) ProcessLoanApplication(baseAmount decimal.Decimal) (err error) {
+func (l *Loan) ProcessLoanApplication(method string, baseAmount decimal.Decimal) (err error) {
 	// Get detailed customer information
 	customer, err := l.cs.Info().GetDetails()
 	if err != nil {
@@ -366,7 +366,7 @@ func (l *Loan) ProcessLoanApplication(baseAmount decimal.Decimal) (err error) {
 
 		// Prepare disbursement request
 		disbursementRequest := disbursement.Request{
-			Method:                  "epoint",
+			Method:                  method,
 			Customer:                *customer,
 			CustomerLoanApplication: customerLoanApplication,
 			Description:             "Loan_approved_via_MLOC",

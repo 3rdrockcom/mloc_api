@@ -602,13 +602,15 @@ func (co *Controllers) PostComputeLoan(c echo.Context) error {
 
 // PostLoanApplicationRequest contains information for a loan application
 type PostLoanApplicationRequest struct {
-	LoanAmount null.String `form:"R2" json:"R2"`
+	DisbursementMethod null.String `form:"R3" json:"R3"`
+	LoanAmount         null.String `form:"R2" json:"R2"`
 }
 
 // Validate checks postform required is validation
 func (lar PostLoanApplicationRequest) Validate() error {
 	return validation.ValidateStruct(&lar,
 		validation.Field(&lar.LoanAmount, validation.Required, validation.By(helpers.ValidateCurrencyAmount)),
+		validation.Field(&lar.DisbursementMethod, validation.Required, validation.In(payments.MethodEPOINT, payments.MethodSTP)),
 	)
 }
 
@@ -642,7 +644,7 @@ func (co *Controllers) PostLoanApplication(c echo.Context) error {
 	loanAmount = loanAmount.RoundBank(helpers.DefaultCurrencyPrecision)
 
 	// Calculate loan application
-	err = sc.Loan().ProcessLoanApplication(loanAmount)
+	err = sc.Loan().ProcessLoanApplication(lar.DisbursementMethod.String, loanAmount)
 	if err != nil {
 		return err
 	}
