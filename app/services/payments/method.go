@@ -1,6 +1,6 @@
 package payments
 
 const (
-	MethodEPOINT = "WALLET"
+	MethodEPOINT = "EPOINT"
 	MethodSTP    = "STP"
 )

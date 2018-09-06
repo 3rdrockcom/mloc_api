@@ -8,6 +8,27 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/services/payments/registration"
 )
 
+var paymentDisbursementMethod = make(map[string]PaymentDisbursementMethod)
+var paymentCollectionMethod = make(map[string]PaymentCollectionMethod)
+
+func init() {
+	disbursementMethods := []PaymentDisbursementMethod{
+		PaymentDisbursementMethod{ID: 1, Code: MethodEPOINT, Name: "Wallet"},
+		PaymentDisbursementMethod{ID: 2, Code: MethodSTP, Name: "Bank Account"},
+	}
+	for _, method := range disbursementMethods {
+		paymentDisbursementMethod[method.Code] = method
+	}
+
+	collectionMethods := []PaymentCollectionMethod{
+		PaymentCollectionMethod{ID: 1, Code: MethodEPOINT, Name: "Wallet"},
+		PaymentCollectionMethod{ID: 2, Code: MethodSTP, Name: "Bank Account"},
+	}
+	for _, method := range collectionMethods {
+		paymentCollectionMethod[method.Code] = method
+	}
+}
+
 // PaymentsService is a service that manages payment disbursements and collections
 type PaymentsService struct{}
 
@@ -73,6 +94,34 @@ func (s *PaymentsService) Collection(req collection.Request) (res collection.Res
 	default:
 		err = ErrInvalidPayloadType
 		return
+	}
+
+	return
+}
+
+type PaymentDisbursementMethod struct {
+	ID   int    `json:"-"`
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+
+type PaymentCollectionMethod struct {
+	ID   int    `json:"-"`
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+
+func (s *PaymentsService) GetDisbursementMethods() (entries []PaymentDisbursementMethod, err error) {
+	for _, method := range paymentDisbursementMethod {
+		entries = append(entries, method)
+	}
+
+	return
+}
+
+func (s *PaymentsService) GetCollectionMethods() (entries []PaymentCollectionMethod, err error) {
+	for _, method := range paymentCollectionMethod {
+		entries = append(entries, method)
 	}
 
 	return
