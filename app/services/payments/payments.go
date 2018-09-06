@@ -5,6 +5,7 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/services/payments/disbursement"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/driver/epoint"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/driver/stp"
+	"github.com/epointpayment/mloc_api_go/app/services/payments/institution"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/registration"
 )
 
@@ -141,6 +142,26 @@ func (s *PaymentsService) GetDisbursementMethods() (entries []PaymentDisbursemen
 func (s *PaymentsService) GetCollectionMethods() (entries []PaymentCollectionMethod, err error) {
 	for _, method := range paymentCollectionMethod {
 		entries = append(entries, method)
+	}
+
+	return
+}
+
+func (s *PaymentsService) GetInstitutions(req institution.Request) (res institution.Response, err error) {
+	switch req.Method {
+	case MethodSTP:
+		var driver *stp.Driver
+		driver, err = stp.New()
+		if err != nil {
+			return
+		}
+		res, err = driver.GetInstitutions(req)
+		if err != nil {
+			return res, err
+		}
+	default:
+		err = ErrInvalidPayloadType
+		return
 	}
 
 	return

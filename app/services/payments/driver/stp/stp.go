@@ -9,6 +9,7 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/services/payments/collection"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/disbursement"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/driver"
+	"github.com/epointpayment/mloc_api_go/app/services/payments/institution"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/registration"
 
 	"github.com/shopspring/decimal"
@@ -101,6 +102,38 @@ func (d *Driver) Disbursement(req disbursement.Request) (res disbursement.Respon
 
 // Collection is pay out of funds (loan proceeds) to the lender
 func (d *Driver) Collection(req collection.Request) (res collection.Response, err error) {
+	return
+}
+
+func (d *Driver) GetInstitutions(req institution.Request) (res institution.Response, err error) {
+	// Get config for stp service
+	cfg, err := d.getConfig()
+	if err != nil {
+		err = driver.ErrIssuerInvalidConfig
+		return
+	}
+	cfg.ProgramID = req.Customer.ProgramCustomerID.Int64
+
+	// Initialize stp service
+	client := new(STP.Client)
+	client, err = STP.New(cfg)
+	if err != nil {
+		return
+	}
+
+	// Get institutions
+	l, err := client.GetInstitutions()
+	if err != nil {
+		return
+	}
+
+	for _, entry := range l.Institutions {
+		res.Institutions = append(res.Institutions, institution.Institution{
+			ID:   int(entry.ID),
+			Name: entry.Name,
+		})
+	}
+
 	return
 }
 

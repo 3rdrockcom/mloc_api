@@ -29,6 +29,7 @@ func (r *Router) appendRoutes() {
 	v1.POST("/customer/create_bank_account", r.c.PostCreateBankAccount, r.mwKeyAuth("default", "R1"))
 	v1.POST("/customer/update_bank_account", r.c.PostUpdateBankAccount, r.mwKeyAuth("default", "R1"))
 	v1.POST("/customer/delete_bank_account", r.c.PostDeleteBankAccount, r.mwKeyAuth("default", "R1"))
+	v1.GET("/customer/get_bank_institution", r.c.GetBankInstitutions, r.mwKeyAuth("default", "R1"))
 
 	// Endpoints for payment
 	v1.GET("/payment/get_disbursement_method", r.c.GetDisbursementMethod, r.mwKeyAuth("default", "R1"))
