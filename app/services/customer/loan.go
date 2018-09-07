@@ -493,7 +493,7 @@ func (l *Loan) ProcessLoanPayment(paymentAmount decimal.Decimal) (err error) {
 
 	// Prepare collection request
 	collectionRequest := collection.Request{
-		Method:          "epoint",
+		Method:          payments.MethodEPOINT,
 		Customer:        *customer,
 		CustomerPayment: customerPayment,
 		Description:     "Loan_approved_via_MLOC",
