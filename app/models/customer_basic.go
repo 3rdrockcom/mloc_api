@@ -13,8 +13,10 @@ type CustomerBasic struct {
 	Address1     null.String `db:"address1"`
 	Address2     null.String `db:"address2"`
 	Country      null.Int    `db:"country"`
-	State        null.Int    `db:"state"`
-	City         null.Int    `db:"city"`
+	StateID      null.Int    `db:"state_id"`
+	State        null.String `db:"state"`
+	CityID       null.Int    `db:"city_id"`
+	City         null.String `db:"city"`
 	ZipCode      null.String `db:"zipcode"`
 	HomeNumber   null.String `db:"home_number"`
 	MobileNumber null.String `db:"mobile_number"`

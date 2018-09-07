@@ -89,8 +89,8 @@ type CustomerBasicRequest struct {
 	Address1     null.String `form:"R6" json:"R6"`
 	Address2     null.String `form:"R7" json:"R7"`
 	Country      null.Int    `form:"R8" json:"R8"`
-	State        null.Int    `form:"R9" json:"R9"`
-	City         null.Int    `form:"R10" json:"R10"`
+	State        null.String `form:"R9" json:"R9"`
+	City         null.String `form:"R10" json:"R10"`
 	ZipCode      null.String `form:"R11" json:"R11"`
 	HomeNumber   null.String `form:"R12" json:"R12"`
 	MobileNumber null.String `form:"R13" json:"R13"`
@@ -169,10 +169,22 @@ func (co Controllers) PostCustomerBasic(c echo.Context) error {
 			customerBasic.Country = cr.Country
 		case "R9":
 			field = "State"
-			customerBasic.State = cr.State
+			if val, err := strconv.Atoi(cr.State.String); err == nil {
+				customerBasic.StateID = null.IntFrom(int64(val))
+				customerBasic.State = null.NewString("", false)
+			} else {
+				customerBasic.StateID = null.NewInt(0, false)
+				customerBasic.State = cr.State
+			}
 		case "R10":
 			field = "City"
-			customerBasic.City = cr.City
+			if val, err := strconv.Atoi(cr.City.String); err == nil {
+				customerBasic.CityID = null.IntFrom(int64(val))
+				customerBasic.City = null.NewString("", false)
+			} else {
+				customerBasic.CityID = null.NewInt(0, false)
+				customerBasic.City = cr.City
+			}
 		case "R11":
 			field = "ZipCode"
 			customerBasic.ZipCode = cr.ZipCode
@@ -189,6 +201,10 @@ func (co Controllers) PostCustomerBasic(c echo.Context) error {
 
 		if field != "" {
 			fields = append(fields, field)
+
+			if field == "City" || field == "State" {
+				fields = append(fields, field+"ID")
+			}
 		}
 	}
 
