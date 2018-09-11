@@ -14,6 +14,7 @@ type CustomerLoan struct {
 	ID                  int
 	CustomerID          null.Int `db:"fk_customer_id"`
 	LoanApplicationID   null.Int
+	Source              null.String
 	EpointTransactionID null.String
 	LoanIntervalID      null.Int
 	LoanTermID          null.Int

@@ -10,6 +10,7 @@ type CustomerPayment struct {
 	ID                  int
 	CustomerID          null.Int `db:"fk_customer_id"`
 	ReferenceCode       null.String
+	Destination         null.String
 	EpointTransactionID null.String
 	PaymentAmount       null.Float
 	DatePaid            null.String

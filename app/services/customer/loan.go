@@ -392,6 +392,7 @@ func (l *Loan) ProcessLoanApplication(method string, bankAccountID int, baseAmou
 		}
 
 		// Set transaction information
+		customerLoanApplication.Source = null.StringFrom(disbursementRequest.Method)
 		customerLoanApplication.EpointTransactionID = null.StringFrom(disbursementResponse.TransactionID)
 	}
 
@@ -508,6 +509,7 @@ func (l *Loan) ProcessLoanPayment(paymentAmount decimal.Decimal) (err error) {
 	}
 
 	// Set transaction information
+	customerPayment.Destination = null.StringFrom(collectionRequest.Method)
 	customerPayment.EpointTransactionID = null.StringFrom(collectionResponse.TransactionID)
 
 	tx, err := DB.Begin()

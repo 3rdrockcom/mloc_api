@@ -368,7 +368,8 @@ type TransactionsHistoryResponse []TransactionResponse
 
 // TransactionResponse contains information about a loan transaction
 type TransactionResponse struct {
-	CustomerID null.Int    ` json:"fk_customer_id"`
+	CustomerID null.Int    `json:"fk_customer_id"`
+	Mode       null.String `json:"mode"`
 	Amount     string      `json:"amount"`
 	Type       string      `json:"t_type"`
 	Date       null.String `json:"t_date"`
@@ -416,6 +417,7 @@ func (co *Controllers) GetTransactionHistory(c echo.Context) error {
 
 		transactionHistoryResponse = append(transactionHistoryResponse, TransactionResponse{
 			CustomerID: transactionHistory[i].CustomerID,
+			Mode:       transactionHistory[i].Mode,
 			Amount: decimal.NewFromFloat(transactionHistory[i].Amount.Float64).
 				StringFixed(helpers.DefaultCurrencyPrecision),
 			Type: transactionHistory[i].Type,

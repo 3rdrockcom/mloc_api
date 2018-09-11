@@ -18,6 +18,7 @@ type CustomerLoanApplication struct {
 	Status              null.String
 	ProcessedBy         null.String
 	ProcessedDate       null.String
+	Source              null.String
 	EpointTransactionID null.String
 }
 
