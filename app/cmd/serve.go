@@ -4,6 +4,7 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/config"
 	"github.com/epointpayment/mloc_api_go/app/controllers"
 	"github.com/epointpayment/mloc_api_go/app/database"
+	"github.com/epointpayment/mloc_api_go/app/helpers"
 	"github.com/epointpayment/mloc_api_go/app/log"
 	"github.com/epointpayment/mloc_api_go/app/router"
 	"github.com/epointpayment/mloc_api_go/app/services"
@@ -32,6 +33,13 @@ var serveCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		log.SetMode(cfg.Environment)
+
+		// Set default currency information
+		err = helpers.SetDefaultCurrency(cfg.Currency.Default)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
 
 		// Create new connection handler for database
 		db := database.NewDatabase(cfg.DB.Driver, cfg.DB.DSN)

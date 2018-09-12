@@ -11,6 +11,7 @@ import (
 type Configuration struct {
 	Environment string
 	Application Application
+	Currency    Currency
 	Server      Server
 	DB          Database
 	Mail        Mail
@@ -24,6 +25,11 @@ type Application struct {
 	Name    string
 	Build   string
 	Version string
+}
+
+// Currency contains currency information
+type Currency struct {
+	Default string
 }
 
 // Server contains server information
@@ -74,7 +80,7 @@ type Epoint struct {
 	Password string
 }
 
-// STP contains epoint merchant api information
+// STP contains stp api information
 type STP struct {
 	BaseURL  string
 	Username string
@@ -93,6 +99,8 @@ func New() (Configuration, error) {
 	cfg.Application.Name = envy.Get("NAME", "app")
 	cfg.Application.Build = Build
 	cfg.Application.Version = Version
+
+	cfg.Currency.Default = envy.Get("CURRENCY_DEFAULT", "USD")
 
 	// Server
 	cfg.Server.Host = envy.Get("HOST", "localhost")

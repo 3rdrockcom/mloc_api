@@ -59,6 +59,10 @@ required = ["github.com/cespare/reflex"]
   name = "github.com/nuveo/infobip"
 
 [[constraint]]
+  branch = "master"
+  name = "github.com/leekchan/accounting"
+
+[[constraint]]
   name = "github.com/spf13/cobra"
   version = "0.0.3"
 

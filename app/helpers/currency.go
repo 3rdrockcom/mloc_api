@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/labstack/gommon/log"
+	"github.com/leekchan/accounting"
 	"github.com/rmg/iso4217"
 	"github.com/shopspring/decimal"
 	null "gopkg.in/guregu/null.v3"
@@ -20,19 +21,59 @@ var (
 	// ErrInvalidCurrency is an error given when the default currency is set to an invalid value
 	ErrInvalidCurrency = errors.New("Invalid default currency used")
 
+	// ErrCurrencyNotConfigured is an error given when the currency used does not have configuration entry
+	ErrCurrencyNotConfigured = errors.New("Currency used is not configured")
+
 	// ErrInvalidCurrencyAmount is an error given when the default currency is set to an invalid value
 	ErrInvalidCurrencyAmount = errors.New("Invalid default currency amount used")
 )
 
-func init() {
-	var currencyCode, currencyPrecision int
+var currency = make(map[string]accounting.Accounting)
 
-	currencyCode, currencyPrecision = iso4217.ByName(DefaultCurrency)
-	if currencyCode == 0 {
-		log.Fatal(ErrInvalidCurrency)
+func init() {
+	// Configure currency
+	currency["USD"] = accounting.Accounting{Symbol: "$", Precision: 2, Thousand: ",", Decimal: "."}
+	currency["MXN"] = accounting.Accounting{Symbol: "$", Precision: 2, Thousand: ",", Decimal: "."}
+
+	// Set default currency information
+	err := SetDefaultCurrency(DefaultCurrency)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+// SetDefaultCurrency sets the default currency used by the application
+func SetDefaultCurrency(currencyCode string) (err error) {
+	var currencyID, currencyPrecision int
+
+	currencyID, currencyPrecision = iso4217.ByName(currencyCode)
+	if currencyID == 0 {
+		err = ErrInvalidCurrency
+		return
 	}
 
+	if _, ok := currency[currencyCode]; !ok {
+		err = ErrCurrencyNotConfigured
+		return
+	}
+
+	DefaultCurrency = currencyCode
 	DefaultCurrencyPrecision = int32(currencyPrecision)
+
+	return
+}
+
+// FormatCurrency formats an amount using a specified currency format
+func FormatCurrency(amount decimal.Decimal, currencyCode string) (formattedAmount string, err error) {
+	c, ok := currency[currencyCode]
+	if !ok {
+		err = ErrCurrencyNotConfigured
+		return
+	}
+
+	formattedAmount = c.FormatMoneyDecimal(amount)
+	return
 }
 
 // ValidateCurrencyAmount is used by the validator to check if value is valid
