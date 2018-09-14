@@ -429,6 +429,7 @@ func (l *Loan) ProcessLoanApplication(method string, bankAccountID int, baseAmou
 	formattedBaseAmount, _ := helpers.FormatCurrency(baseAmount, helpers.DefaultCurrency)
 	r := strings.NewReplacer(
 		"{amount}", formattedBaseAmount,
+		"{currency}", helpers.DefaultCurrency,
 		"{firstname}", customer.FirstName.String,
 	)
 
@@ -655,6 +656,7 @@ func (l *Loan) ProcessLoanPayment(paymentAmount decimal.Decimal) (err error) {
 	formattedPaymentAmount, _ := helpers.FormatCurrency(paymentAmount, helpers.DefaultCurrency)
 	r := strings.NewReplacer(
 		"{amount}", formattedPaymentAmount,
+		"{currency}", helpers.DefaultCurrency,
 		"{firstname}", customer.FirstName.String,
 	)
 
