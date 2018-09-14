@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS `tblCustomerBankAccount` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `customer_id` int(11) NOT NULL,
   `alias` varchar(80) NOT NULL DEFAULT '',
+  `account_type` varchar(32) NOT NULL,
   `bank_code` varchar(16) NOT NULL DEFAULT '',
   `account_number` varchar(32) NOT NULL,
   `date_created` datetime NOT NULL DEFAULT current_timestamp(),

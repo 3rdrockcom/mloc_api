@@ -63,6 +63,12 @@ var (
 	// ErrBankAccountNotFound is an error given for a non-existent bank account
 	ErrBankAccountNotFound = errors.New("No bank account(s) were found")
 
+	// ErrBankAccountTypeUnknown is an error given for an unknown bank account type
+	ErrBankAccountTypeUnknown = errors.New("Bank account type unknown")
+
+	// ErrBankAccountNumberInvalid is an error given for an invalid bank account number
+	ErrBankAccountNumberInvalid = errors.New("Bank account number is invalid")
+
 	// ErrInvalidBankAccountInformation is an error shown when the customer submits invalid banking information
 	ErrInvalidBankAccountInformation = errors.New("Invalid Customer Bank Account Information")
 

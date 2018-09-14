@@ -64,7 +64,9 @@ func (r *Router) appendErrorHandler() {
 			code = http.StatusBadRequest
 		case Customer.ErrBankAccountNotFound.Error():
 			code = http.StatusNotFound
-		case Customer.ErrInvalidBankAccountID.Error():
+		case
+			Customer.ErrInvalidBankAccountID.Error(),
+			Customer.ErrBankAccountNumberInvalid.Error():
 			code = http.StatusBadRequest
 		case Customer.ErrInvalidBankAccountInformation.Error():
 			code = http.StatusBadRequest

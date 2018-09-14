@@ -11,6 +11,7 @@ import (
 type Configuration struct {
 	Environment string
 	Application Application
+	Country     Country
 	Currency    Currency
 	Server      Server
 	DB          Database
@@ -25,6 +26,11 @@ type Application struct {
 	Name    string
 	Build   string
 	Version string
+}
+
+// Country contains country information
+type Country struct {
+	Default string
 }
 
 // Currency contains currency information
@@ -100,6 +106,10 @@ func New() (Configuration, error) {
 	cfg.Application.Build = Build
 	cfg.Application.Version = Version
 
+	// Country
+	cfg.Country.Default = envy.Get("COUNTRY_DEFAULT", "US")
+
+	// Currency
 	cfg.Currency.Default = envy.Get("CURRENCY_DEFAULT", "USD")
 
 	// Server
