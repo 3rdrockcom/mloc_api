@@ -9,6 +9,8 @@ type CustomerBankAccount struct {
 	BankCode      string    `json:"bank_code"`
 	AccountType   string    `json:"account_type"`
 	AccountNumber string    `json:"account_number"`
+	KmsID         int       `db:"kms_id" json:"-"`
+	EvaultID      int       `db:"evault_id" json:"-"`
 	DateCreated   time.Time `json:"-"`
 	DateUpdated   time.Time `json:"-"`
 

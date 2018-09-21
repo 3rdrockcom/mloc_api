@@ -362,7 +362,7 @@ func (l *Loan) ProcessLoanApplication(method string, bankAccountID int, baseAmou
 		customerBankAccount := new(models.CustomerBankAccount)
 
 		if bankAccountID > 0 {
-			customerBankAccount, err = l.cs.BankAccount().Get(bankAccountID)
+			customerBankAccount, err = l.cs.BankAccount().GetUnmasked(bankAccountID)
 			if err != nil {
 				return
 			}

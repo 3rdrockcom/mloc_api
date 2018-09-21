@@ -41,6 +41,22 @@ func (a *BankAccount) Get(id int) (entry *models.CustomerBankAccount, err error)
 	return
 }
 
+// GetUnmasked gets decrypted bank account information
+func (a *BankAccount) GetUnmasked(id int) (entry *models.CustomerBankAccount, err error) {
+	entry, err = a.Get(id)
+	if err != nil {
+		return
+	}
+
+	// Decrypt bank account number
+	entry.AccountNumber, err = a.decrypt(entry.KmsID, entry.EvaultID)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 // GetAll gets information about all bank account
 func (a *BankAccount) GetAll() (entries []models.CustomerBankAccount, err error) {
 	err = DB.Select().
@@ -71,6 +87,18 @@ func (a *BankAccount) Create(entry *models.CustomerBankAccount) (err error) {
 	isValid, err := a.isValidAccountNumber(entry)
 	if err != nil || isValid == false {
 		err = ErrBankAccountNumberInvalid
+		return
+	}
+
+	// Encrypt and store bank account number
+	entry.KmsID, entry.EvaultID, err = a.encrypt(entry.AccountNumber)
+	if err != nil {
+		return
+	}
+
+	// Mask bank account number
+	err = a.maskAccountNumber(entry)
+	if err != nil {
 		return
 	}
 
@@ -118,7 +146,7 @@ func (a *BankAccount) getType() (accountType string, err error) {
 
 // isValidAccountNumber checks if the bank account number is valid
 func (a *BankAccount) isValidAccountNumber(entry *models.CustomerBankAccount) (isValid bool, err error) {
-
+	// Determine the bank account type and validate account number
 	switch entry.AccountType {
 	case BankAccountTypeCLABE:
 		err = clabe.New(entry.AccountNumber).Validate()
@@ -131,6 +159,36 @@ func (a *BankAccount) isValidAccountNumber(entry *models.CustomerBankAccount) (i
 
 	isValid = true
 	return
+}
+
+// maskAccountNumber will mask account number depending on the bank account type
+func (a *BankAccount) maskAccountNumber(entry *models.CustomerBankAccount) (err error) {
+
+	// Determine the bank account type and mask account number
+	switch entry.AccountType {
+	case BankAccountTypeCLABE:
+		entry.AccountNumber = a.maskRange(entry.AccountNumber, 3, len(entry.AccountNumber)-4)
+	default:
+		err = ErrBankAccountTypeUnknown
+	}
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// maskRange will obfuscate a range of characters within a string
+func (a *BankAccount) maskRange(s string, start int, end int) string {
+	rs := []rune(s)
+
+	for i := 0; i < len(rs); i++ {
+		if i >= start && i < end {
+			rs[i] = '*'
+		}
+	}
+
+	return string(rs)
 }
 
 // Update updates a bank account entry

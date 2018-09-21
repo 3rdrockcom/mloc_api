@@ -19,6 +19,8 @@ type Configuration struct {
 	SMS         SMS
 	Epoint      Epoint
 	STP         STP
+	KMS         KMS
+	Evault      Evault
 }
 
 // Application contains application information
@@ -93,6 +95,23 @@ type STP struct {
 	Password string
 }
 
+// KMS contains kms api information
+type KMS struct {
+	BaseURL   string
+	ProgramID int64
+	Username  string
+	Password  string
+}
+
+// Evault contains evault api information
+type Evault struct {
+	BaseURL     string
+	ProgramID   int64
+	PartitionID int64
+	Username    string
+	Password    string
+}
+
 // cfg contains the processed configuration values
 var cfg Configuration
 
@@ -152,6 +171,19 @@ func New() (Configuration, error) {
 	cfg.STP.BaseURL, _ = envy.MustGet("STP_API")
 	cfg.STP.Username, _ = envy.MustGet("STP_USERNAME")
 	cfg.STP.Password, _ = envy.MustGet("STP_PASSWORD")
+
+	// KMS
+	cfg.KMS.BaseURL, _ = envy.MustGet("KMS_API")
+	cfg.KMS.ProgramID, _ = strconv.ParseInt(envy.Get("KMS_PROGRAM_ID", ""), 10, 64)
+	cfg.KMS.Username, _ = envy.MustGet("KMS_USERNAME")
+	cfg.KMS.Password, _ = envy.MustGet("KMS_PASSWORD")
+
+	// Evault
+	cfg.Evault.BaseURL, _ = envy.MustGet("EVAULT_API")
+	cfg.Evault.ProgramID, _ = strconv.ParseInt(envy.Get("EVAULT_PROGRAM_ID", ""), 10, 64)
+	cfg.Evault.PartitionID, _ = strconv.ParseInt(envy.Get("EVAULT_PARTITION_ID", ""), 10, 64)
+	cfg.Evault.Username, _ = envy.MustGet("EVAULT_USERNAME")
+	cfg.Evault.Password, _ = envy.MustGet("EVAULT_PASSWORD")
 
 	// For development only
 	if IsDev() {

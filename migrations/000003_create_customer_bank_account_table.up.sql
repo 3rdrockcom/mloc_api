@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS `tblCustomerBankAccount` (
   `account_type` varchar(32) NOT NULL,
   `bank_code` varchar(16) NOT NULL DEFAULT '',
   `account_number` varchar(32) NOT NULL,
+  `kms_id` int(11) NOT NULL,
+  `evault_id` int(11) NOT NULL,
   `date_created` datetime NOT NULL DEFAULT current_timestamp(),
   `date_updated` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
