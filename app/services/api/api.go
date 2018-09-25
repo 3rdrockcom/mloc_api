@@ -32,6 +32,19 @@ func (as *APIService) DoAuth(username, password string) (isValid bool, err error
 	return
 }
 
+// DoSystemAuth checks if a system user's auth credentials are valid
+func (as *APIService) DoSystemAuth(username, password string) (isValid bool, err error) {
+	authorizedUsers := make(map[string]string)
+
+	authorizedUsers["EPOINT_SYSTEM"] = "jm1cQZOqPN"
+
+	if val, ok := authorizedUsers[username]; ok && val == password {
+		isValid = true
+	}
+
+	return
+}
+
 // GetLoginKey gets the login API key
 func (as *APIService) GetLoginKey() (entry *models.APIKey, err error) {
 	entry = new(models.APIKey)

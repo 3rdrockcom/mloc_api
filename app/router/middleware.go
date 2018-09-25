@@ -31,8 +31,11 @@ func (r *Router) appendMiddleware() {
 }
 
 // mwBasicAuth handles the basic authentication for a specific route
-func (r *Router) mwBasicAuth() echo.MiddlewareFunc {
-	return middleware.BasicAuth(auth.BasicValidator)
+func (r *Router) mwBasicAuth(authorizedRoles []string) echo.MiddlewareFunc {
+	return auth.BasicAuthWithConfig(auth.BasicAuthConfig{
+		Validator: auth.BasicValidator,
+		Roles:     authorizedRoles,
+	})
 }
 
 func (r *Router) mwKeyAuth(authType string, customerUniqueIDFieldName string) echo.MiddlewareFunc {
