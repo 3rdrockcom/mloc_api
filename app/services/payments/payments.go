@@ -100,16 +100,25 @@ func (s *PaymentsService) Collection(req collection.Request) (res collection.Res
 		if err != nil {
 			return res, err
 		}
+	default:
+		err = ErrInvalidPayloadType
+		return
+	}
 
+	return
+}
+
+func (s *PaymentsService) CollectionPush(push collection.Push) (req collection.Request, res collection.Response, err error) {
+	switch push.Method {
 	case MethodSTP:
 		var driver *stp.Driver
 		driver, err = stp.New()
 		if err != nil {
 			return
 		}
-		res, err = driver.Collection(req)
+		req, res, err = driver.CollectionPush(push)
 		if err != nil {
-			return res, err
+			return req, res, err
 		}
 	default:
 		err = ErrInvalidPayloadType

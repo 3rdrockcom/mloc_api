@@ -465,8 +465,8 @@ func (l *Loan) ProcessLoanApplication(method string, bankAccountID int, baseAmou
 	return
 }
 
-// ProcessLoanPayment processes a loan payment
-func (l *Loan) ProcessLoanPayment(paymentAmount decimal.Decimal) (err error) {
+// DoCollection collects funds from a funding source and use it to pay down a loan
+func (l *Loan) DoCollection(paymentAmount decimal.Decimal) (err error) {
 	// Get detailed customer information
 	customer, err := l.cs.Info().GetDetails()
 	if err != nil {
@@ -494,25 +494,101 @@ func (l *Loan) ProcessLoanPayment(paymentAmount decimal.Decimal) (err error) {
 		return
 	}
 
+	payload := collection.Payload{}
+
+	payload.Amount = paymentAmount
+
 	// Prepare collection request
-	collectionRequest := collection.Request{
+	payload.Request = collection.Request{
 		Method:          payments.MethodEPOINT,
 		Customer:        *customer,
 		CustomerPayment: customerPayment,
 		Description:     "Loan_approved_via_MLOC",
 	}
-	collectionResponse := collection.Response{}
+	// collectionResponse := collection.Response{}
 
 	// Execute payment collection
-	collectionResponse, err = ps.Collection(collectionRequest)
+	payload.Response, err = ps.Collection(payload.Request)
 	if err != nil {
 		err = ErrIssuerFailedTransfer
 		return
 	}
 
 	// Set transaction information
-	customerPayment.Destination = null.StringFrom(collectionRequest.Method)
-	customerPayment.EpointTransactionID = null.StringFrom(collectionResponse.TransactionID)
+	payload.Request.CustomerPayment.Destination = null.StringFrom(payload.Request.Method)
+	payload.Request.CustomerPayment.EpointTransactionID = null.StringFrom(payload.Response.TransactionID)
+
+	// Process loan
+	err = l.processLoanPayment(payload)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// DoCollectionPush uses collected funds to pay down a loan
+func (l *Loan) DoCollectionPush(push collection.Push) (err error) {
+	paymentAmount := push.Transaction.Amount
+
+	// Get detailed customer information
+	customer, err := l.cs.Info().GetDetails()
+	if err != nil {
+		return
+	}
+
+	// Generate reference code
+	refCode := "PL" + "-" + generateRandomKey(5)
+
+	// Determine payment date
+	t := time.Now().UTC()
+
+	// Prepare loan payment information
+	pa, _ := paymentAmount.Float64()
+	customerPayment := models.CustomerPayment{
+		CustomerID:    null.IntFrom(int64(customer.ID)),
+		ReferenceCode: null.StringFrom(refCode),
+		PaymentAmount: null.FloatFrom(pa),
+		DatePaid:      null.StringFrom(t.Format("2006-01-02 15:04:05")),
+		PaidBy:        null.StringFrom(strconv.FormatInt(int64(customer.ID), 10)),
+	}
+
+	push.Customer = *customer
+	push.CustomerPayment = customerPayment
+
+	// Initialize payments service
+	ps := payments.New()
+	if err != nil {
+		return
+	}
+
+	// Execute payment collection
+	payload := collection.Payload{
+		Amount: paymentAmount,
+	}
+	payload.Request, payload.Response, err = ps.CollectionPush(push)
+	if err != nil {
+		err = ErrIssuerFailedTransfer
+		return
+	}
+
+	// Process loan
+	err = l.processLoanPayment(payload)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// ProcessLoanPayment processes a loan payment
+func (l *Loan) processLoanPayment(payload collection.Payload) (err error) {
+	paymentAmount := payload.Amount
+	customer := payload.Request.Customer
+	customerPayment := payload.Request.CustomerPayment
+
+	// Determine payment date
+	t := time.Now().UTC()
 
 	tx, err := DB.Begin()
 	if err != nil {

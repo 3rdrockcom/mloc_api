@@ -13,6 +13,7 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/services/payments/registration"
 
 	"github.com/shopspring/decimal"
+	null "gopkg.in/guregu/null.v3"
 )
 
 // Driver manages the adapter for client
@@ -100,8 +101,33 @@ func (d *Driver) Disbursement(req disbursement.Request) (res disbursement.Respon
 	return
 }
 
-// Collection is pay out of funds (loan proceeds) to the lender
+// Collection is a pay out of funds (loan proceeds) to the lender
 func (d *Driver) Collection(req collection.Request) (res collection.Response, err error) {
+	return
+}
+
+// CollectionPush processes a pay out of funds (loan proceeds) to the lender
+func (d *Driver) CollectionPush(push collection.Push) (req collection.Request, res collection.Response, err error) {
+
+	// Prepare collection request
+	req = collection.Request{
+		Method:          push.Method,
+		Customer:        push.Customer,
+		CustomerPayment: push.CustomerPayment,
+		Description:     push.Transaction.Description,
+	}
+
+	// Prepare collection response
+	res = collection.Response{
+		TransactionID: push.Transaction.ID,
+		Amount:        decimal.NewFromFloat(push.CustomerPayment.PaymentAmount.Float64),
+	}
+
+	// Set transaction information
+	req.CustomerPayment.DatePaid = null.StringFrom(push.Transaction.Date.Format("2006-01-02 15:04:05"))
+	req.CustomerPayment.Destination = null.StringFrom(req.Method)
+	req.CustomerPayment.EpointTransactionID = null.StringFrom(res.TransactionID)
+
 	return
 }
 

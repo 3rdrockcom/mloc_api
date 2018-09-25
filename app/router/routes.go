@@ -25,6 +25,8 @@ func (r *Router) appendRoutes() {
 	v1.POST("/customer/loan_application", r.c.PostLoanApplication, r.mwKeyAuth("default", "R1"))
 	v1.POST("/customer/pay_loan", r.c.PostPayLoan, r.mwKeyAuth("default", "R1"))
 
+	v1.POST("/customer/pay_loan_push", r.c.PostPayLoanPush, r.mwKeyAuth("default", "R1"))
+
 	v1.GET("/customer/get_bank_account", r.c.GetBankAccount, r.mwKeyAuth("default", "R1"))
 	v1.POST("/customer/create_bank_account", r.c.PostCreateBankAccount, r.mwKeyAuth("default", "R1"))
 	v1.POST("/customer/update_bank_account", r.c.PostUpdateBankAccount, r.mwKeyAuth("default", "R1"))

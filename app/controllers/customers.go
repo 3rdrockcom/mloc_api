@@ -11,6 +11,7 @@ import (
 	"github.com/epointpayment/mloc_api_go/app/models"
 	Customer "github.com/epointpayment/mloc_api_go/app/services/customer"
 	"github.com/epointpayment/mloc_api_go/app/services/payments"
+	"github.com/epointpayment/mloc_api_go/app/services/payments/collection"
 	"github.com/epointpayment/mloc_api_go/app/services/payments/registration"
 
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -719,7 +720,82 @@ func (co *Controllers) PostPayLoan(c echo.Context) error {
 	loanAmount = loanAmount.RoundBank(helpers.DefaultCurrencyPrecision)
 
 	// Calculate loan payment
-	err = sc.Loan().ProcessLoanPayment(loanAmount)
+	err = sc.Loan().DoCollection(loanAmount)
+	if err != nil {
+		return err
+	}
+
+	// Send response
+	msg := Customer.MsgCustomerMadeLoanPayment
+	return SendOKResponse(c, msg)
+}
+
+// PostPayLoanRequest contains information about a loan payment
+type PostPayLoanPushRequest struct {
+	CollectionMethod       null.String `form:"R3" json:"R3"`
+	TransactionAmount      null.String `form:"R2" json:"R2"`
+	TransactionDate        null.String `form:"R4" json:"R4"`
+	TransactionID          null.String `form:"R5" json:"R5"`
+	TransactionDescription null.String `form:"R6" json:"R6"`
+}
+
+// Validate checks postform required is validation
+func (plr PostPayLoanPushRequest) Validate() error {
+	return validation.ValidateStruct(&plr,
+		validation.Field(&plr.TransactionAmount, validation.Required, validation.By(helpers.ValidateCurrencyAmount)),
+		validation.Field(&plr.CollectionMethod, validation.Required, validation.In(payments.MethodSTP)),
+		validation.Field(&plr.TransactionDate, validation.Required, validation.Date("2006-01-02 15:04:05")),
+		validation.Field(&plr.TransactionID, validation.Required),
+	)
+}
+
+// PostPayLoan processes a loan payment
+func (co *Controllers) PostPayLoanPush(c echo.Context) error {
+	// Get customer ID
+	customerID := c.Get("customerID").(int)
+
+	// Initialize customer service
+	sc, err := Customer.New(customerID)
+	if err != nil {
+		return SendErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	plr := PostPayLoanPushRequest{}
+
+	// Bind data to struct
+	if err = c.Bind(&plr); err != nil {
+		err = Customer.ErrInvalidLoanAmount
+		return err
+	}
+
+	// Validate struct
+	if err = plr.Validate(); err != nil {
+		err = Customer.ErrInvalidLoanAmount
+		return err
+	}
+
+	// Convert payment amount to decimal
+	loanAmount, _ := decimal.NewFromString(plr.TransactionAmount.String)
+	loanAmount = loanAmount.RoundBank(helpers.DefaultCurrencyPrecision)
+
+	// Date
+	t, err := time.Parse("2006-01-02 15:04:05", plr.TransactionDate.String)
+	if err != nil {
+		return err
+	}
+
+	collectionPush := collection.Push{
+		Method: plr.CollectionMethod.String,
+		Transaction: collection.PushTransaction{
+			ID:          plr.TransactionID.String,
+			Date:        t,
+			Amount:      loanAmount,
+			Description: plr.TransactionDescription.String,
+		},
+	}
+
+	// Calculate loan payment
+	err = sc.Loan().DoCollectionPush(collectionPush)
 	if err != nil {
 		return err
 	}
